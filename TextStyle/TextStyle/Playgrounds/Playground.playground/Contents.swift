@@ -3,7 +3,7 @@
 import UIKit
 import PlaygroundSupport
 
-struct Style {
+struct Style: Decodable {
     let size: CGFloat
     let color: UIColor
     let alignment: NSTextAlignment
@@ -11,6 +11,39 @@ struct Style {
     let lineHeightMultiple: CGFloat
     let paragraphSpacing: CGFloat
     let numberOfLines: Int
+    
+    private enum CodingKeys: String, CodingKey {
+        case size
+        case color
+        case alignment
+        case kern
+        case lineHeightMultiple
+        case paragraphSpacing
+        case numberOfLines
+    }
+    
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        let size = try values.decodeIfPresent(CGFloat.self, forKey: .size)
+        let colorString = try values.decodeIfPresent(String.self, forKey: .color)
+        let alignmentString = try values.decodeIfPresent(String.self, forKey: .alignment)
+        let kern = try values.decodeIfPresent(CGFloat.self, forKey: .kern)
+        let lineHeightMultiple = try values.decodeIfPresent(CGFloat.self, forKey: .lineHeightMultiple)
+        let paragraphSpacing = try values.decodeIfPresent(CGFloat.self, forKey: .paragraphSpacing)
+        let numberOfLines = try values.decodeIfPresent(Int.self, forKey: .numberOfLines)
+        
+        let color = ColorAdapter.uiColor(from: colorString) ?? .black
+        let alignment = AlignmentAdapter.nsTextAlignment(from: alignmentString) ?? .natural
+        
+        self = .init(size: size ?? 13.0,
+                     color: color,
+                     alignment: alignment,
+                     kern: kern ?? 0.0,
+                     lineHeightMultiple: lineHeightMultiple ?? 0.0,
+                     paragraphSpacing: paragraphSpacing ?? 0.0,
+                     numberOfLines: numberOfLines ?? 1)
+        return
+    }
     
     init(size: CGFloat = 13.0,
          color: UIColor = .black,
@@ -30,7 +63,51 @@ struct Style {
     }
 }
 
-struct TextStyle {
+final class ColorAdapter {
+    class func uiColor(from string: String?) -> UIColor? {
+        guard let string = string else {
+            return nil
+        }
+        
+        switch string {
+        case "black":
+            return .black
+        case "white":
+            return .white
+        case "red":
+            return .red
+        case "blue":
+            return .blue
+        case "green":
+            return .green
+        default:
+            return nil
+        }
+    }
+}
+
+final class AlignmentAdapter {
+    class func nsTextAlignment(from string: String?) -> NSTextAlignment? {
+        guard let string = string else {
+            return nil
+        }
+        
+        switch string {
+        case "natural":
+            return .natural
+        case "left":
+            return .left
+        case "right":
+            return .right
+        case "center":
+            return .center
+        default:
+            return nil
+        }
+    }
+}
+
+struct TextStyle: Decodable {
     let text: String
     let style: Style
 }
@@ -66,7 +143,21 @@ extension UILabel {
     }
 }
 
-class myViewController : UIViewController {
+let viewControllerJSON = """
+{
+"textStyle1": { "text": "Hello World!", "style": { "size": 26.0, "color": "black", "alignment": "center"} },
+"textStyle2": { "text": "Welcome to my new framework", "style": { "size": 13.0 } },
+"textStyle3": { "text": "Backend driven style but layout is done on app side", "style": { "size": 14.0, "color": "green"} }
+}
+""".data(using: .utf8)!
+
+final class myViewController : UIViewController {
+    
+    private struct myViewControllerData: Decodable {
+        let textStyle1: TextStyle
+        let textStyle2: TextStyle
+        let textStyle3: TextStyle
+    }
     
     let s1 = Style(size: 16.0,
                    color: .red,
@@ -74,18 +165,50 @@ class myViewController : UIViewController {
                    kern: 1.0,
                    numberOfLines: 0)
     
+    private var label1: UILabel = {
+        let label = UILabel(frame: CGRect(x: 0, y: 0, width: 300, height: 50))
+        return label
+    }()
+    private var label2: UILabel = {
+        let label = UILabel(frame: CGRect(x: 0, y: 50, width: 300, height: 50))
+        return label
+    }()
+    private var label3: UILabel = {
+        let label = UILabel(frame: CGRect(x: 0, y: 100, width: 300, height: 50))
+        return label
+    }()
+    
+    private var data = myViewControllerData(textStyle1: TextStyle(text: "", style: Style()),
+                                            textStyle2: TextStyle(text: "", style: Style()),
+                                            textStyle3: TextStyle(text: "", style: Style()))
+        {
+        didSet {
+            label1.setTextStyle(data.textStyle1)
+            label2.setTextStyle(data.textStyle2)
+            label3.setTextStyle(data.textStyle3)
+        }
+    }
+    
     override func loadView() {
         let view = UIView()
         view.backgroundColor = .white
-
-        let label = UILabel(frame: CGRect(x: 0, y: 0, width: 300, height: 200))
         
-        let t1 = TextStyle(text: "Hello World! This is an exemple of textstyle using a lot of different attributes.", style: s1)
-        label.setTextStyle(t1)
+        [label1, label2, label3].forEach {
+            view.addSubview($0)
+        }
         
-        view.addSubview(label)
+        loadData()
         
         self.view = view
+    }
+    
+    private func loadData() {
+        let decoder = JSONDecoder()
+        do {
+            data = try decoder.decode(myViewControllerData.self, from: viewControllerJSON)
+        } catch {
+            print(error)
+        }
     }
 }
 
