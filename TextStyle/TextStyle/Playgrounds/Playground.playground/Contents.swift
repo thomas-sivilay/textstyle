@@ -113,9 +113,35 @@ final class AlignmentAdapter {
     }
 }
 
-struct TextStyle: Decodable {
+enum StyleOrAttributes {
+    case style(name: String)
+    case attributes(style: Style)
+}
+
+struct TextStyle {
     var text: String
-    var style: Style
+    var style: StyleOrAttributes
+}
+
+extension TextStyle: Decodable {
+    private enum CodingKeys: String, CodingKey {
+        case text
+        case style
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let text = try container.decode(String.self, forKey: .text)
+        
+        // To refactor
+        if let style = try? container.decodeIfPresent(Style.self, forKey: .style) {
+            self = TextStyle(text: text, style: StyleOrAttributes.attributes(style: style!))
+        } else if let name = try? container.decodeIfPresent(String.self, forKey: .style) {
+            self = TextStyle(text: text, style: StyleOrAttributes.style(name: name!))
+        } else {
+            fatalError()
+        }
+    }
 }
 
 struct Theme: Decodable {
@@ -123,14 +149,14 @@ struct Theme: Decodable {
 }
 
 extension UILabel {
-    func setTextStyle(_ textStyle: TextStyle) {
-        self.attributedText = makeAttributedString(for: textStyle)
-        self.numberOfLines = textStyle.style.numberOfLines
+    func setText(_ text: String, with style: Style) {
+        self.attributedText = makeAttributedString(for: text, with: style)
+        self.numberOfLines = style.numberOfLines
     }
     
-    private func makeAttributedString(for textStyle: TextStyle) -> NSAttributedString {
-        let attributes = makeAttributes(for: textStyle.style)
-        return NSAttributedString(string: textStyle.text, attributes: attributes)
+    private func makeAttributedString(for text: String, with style: Style) -> NSAttributedString {
+        let attributes = makeAttributes(for: style)
+        return NSAttributedString(string: text, attributes: attributes)
     }
     
     private func makeAttributes(for style: Style) -> [NSAttributedStringKey: Any] {
@@ -157,15 +183,18 @@ final class Render {
     var theme: Theme?
     
     func render(label: UILabel, with textStyle: TextStyle) {
-        var textStyle = textStyle
+        var style = Style()
         
-        if let name = textStyle.style.name,
-            let theme = theme,
-            let themeStyle = theme.styles[name] {
-            textStyle.style = themeStyle
+        switch textStyle.style {
+        case let .style(name):
+            if let theme = theme, let themeStyle = theme.styles[name] {
+                style = themeStyle
+            }
+        case let .attributes(attributes):
+            style = attributes
         }
         
-        label.setTextStyle(textStyle)
+        label.setText(textStyle.text, with: style)
     }
 }
 
@@ -180,8 +209,8 @@ let themeJSON = """
 
 let viewControllerJSON = """
 {
-"textStyle1": { "text": "Hello World!", "style": { "name": "title" } },
-"textStyle2": { "text": "Welcome to my new framework", "style": { "size": 13.0 } },
+"textStyle1": { "text": "Hello World!", "style": "title" },
+"textStyle2": { "text": "Welcome to my new framework", "style": "body" },
 "textStyle3": { "text": "Backend driven style but layout is done on app side", "style": { "size": 14.0, "color": "green"} }
 }
 """.data(using: .utf8)!
@@ -209,9 +238,9 @@ final class myViewController : UIViewController {
     
     private var render: Render = Render()
     
-    private var data = MyViewControllerData(textStyle1: TextStyle(text: "", style: Style()),
-                                            textStyle2: TextStyle(text: "", style: Style()),
-                                            textStyle3: TextStyle(text: "", style: Style()))
+    private var data = MyViewControllerData(textStyle1: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")),
+                                            textStyle2: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")),
+                                            textStyle3: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")))
         {
         didSet {
             [(label1, data.textStyle1),
@@ -242,7 +271,7 @@ final class myViewController : UIViewController {
             theme = Theme(styles:
                 [
                     "title": Style(name: "title", size: 26.0, color: .red, alignment: .center, kern: 1.0),
-                    "body": Style(name: "body", size: 14.0, color: .black, alignment: .natural)
+                    "body": Style(name: "body", size: 16.0, color: .black, alignment: .natural)
                 ]
             )
             render.theme = theme
