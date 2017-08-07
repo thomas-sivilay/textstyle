@@ -162,16 +162,23 @@ struct Theme: Decodable {
 
 extension UILabel {
     func setRichText(_ text: String, with theme: Theme) {
+        self.attributedText = makeAttributedString(for: text, with: theme)
         self.numberOfLines = 0
-        
+    }
+    
+    func setText(_ text: String, with style: Style) {
+        self.attributedText = makeAttributedString(for: text, with: style)
+        self.numberOfLines = style.numberOfLines
+    }
+    
+    private func makeAttributedString(for text: String, with theme: Theme) -> NSAttributedString {
         var richText = [(String, Style)]()
         var styleName = ""
         var styleNameClosing = ""
         var currentText = ""
         
-        var scanningTag = false
+        var isText = true
         var closing = false
-        var scanningText = false
         
         var ignore = false
         
@@ -180,18 +187,16 @@ extension UILabel {
             let c = text.characters[text.characters.index(text.characters.startIndex, offsetBy: offset)]
             
             if c == "<" {
-                scanningTag = true
-                scanningText = false
+                isText = false
                 ignore = true
             }
             
             if c == ">" {
-                scanningTag = false
-                scanningText = true
+                isText = true
                 ignore = true
             }
             
-            print("current: \(c) - styleName: \(styleName) \(styleNameClosing) - text: \(currentText) - scanText: \(scanningText) - scanTag: \(scanningTag) - ignore: \(ignore)")
+            //            print("current: \(c) - styleName: \(styleName) \(styleNameClosing) - text: \(currentText) - scanText: \(isText) - ignore: \(ignore)")
             
             if c == "/" {
                 closing = true
@@ -200,7 +205,7 @@ extension UILabel {
             
             if ignore {
                 ignore = false
-            } else if scanningTag {
+            } else if !isText {
                 if closing {
                     styleNameClosing += String(c)
                 } else {
@@ -218,7 +223,7 @@ extension UILabel {
                 currentText = ""
                 styleNameClosing = ""
                 styleName = ""
-                closing = false 
+                closing = false
             }
             
             offset = offset + 1
@@ -230,12 +235,7 @@ extension UILabel {
             aText.append(makeAttributedString(for: $0.0, with: $0.1))
         }
         
-        self.attributedText = aText
-    }
-    
-    func setText(_ text: String, with style: Style) {
-        self.attributedText = makeAttributedString(for: text, with: style)
-        self.numberOfLines = style.numberOfLines
+        return aText
     }
     
     private func makeAttributedString(for text: String, with style: Style) -> NSAttributedString {
@@ -376,8 +376,9 @@ final class myViewController : UIViewController {
                     "body": Style(name: "body", size: 16.0, color: .black, alignment: .natural)
                 ]
             )
-            render.theme = theme
 //            theme = try decoder.decode(Theme.self, from: themeJSON)
+            render.theme = theme
+            
             data = try decoder.decode(MyViewControllerData.self, from: viewControllerJSON)
         } catch {
             print(error)
