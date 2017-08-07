@@ -118,6 +118,18 @@ enum StyleOrAttributes {
     case attributes(style: Style)
 }
 
+struct RichText {
+    var text: String
+}
+
+extension RichText: Decodable {
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let text = try container.decode(String.self)
+        self = RichText(text: text)
+    }
+}
+
 struct TextStyle {
     var text: String
     var style: StyleOrAttributes
@@ -149,6 +161,78 @@ struct Theme: Decodable {
 }
 
 extension UILabel {
+    func setRichText(_ text: String, with theme: Theme) {
+        self.numberOfLines = 0
+        
+        var richText = [(String, Style)]()
+        var styleName = ""
+        var styleNameClosing = ""
+        var currentText = ""
+        
+        var scanningTag = false
+        var closing = false
+        var scanningText = false
+        
+        var ignore = false
+        
+        var offset = 0
+        while offset < text.characters.count {
+            let c = text.characters[text.characters.index(text.characters.startIndex, offsetBy: offset)]
+            
+            if c == "<" {
+                scanningTag = true
+                scanningText = false
+                ignore = true
+            }
+            
+            if c == ">" {
+                scanningTag = false
+                scanningText = true
+                ignore = true
+            }
+            
+            print("current: \(c) - styleName: \(styleName) \(styleNameClosing) - text: \(currentText) - scanText: \(scanningText) - scanTag: \(scanningTag) - ignore: \(ignore)")
+            
+            if c == "/" {
+                closing = true
+                ignore = true
+            }
+            
+            if ignore {
+                ignore = false
+            } else if scanningTag {
+                if closing {
+                    styleNameClosing += String(c)
+                } else {
+                    styleName += String(c)
+                }
+            } else {
+                currentText += String(c)
+            }
+            
+            if styleNameClosing == styleName && styleNameClosing.characters.count > 0 {
+                let style = theme.styles[styleName]!
+                richText.append((currentText, style))
+                print("ADDED \(currentText) with style: \(styleName)")
+                
+                currentText = ""
+                styleNameClosing = ""
+                styleName = ""
+                closing = false 
+            }
+            
+            offset = offset + 1
+        }
+        
+        var aText = NSMutableAttributedString()
+        
+        richText.forEach {
+            aText.append(makeAttributedString(for: $0.0, with: $0.1))
+        }
+        
+        self.attributedText = aText
+    }
+    
     func setText(_ text: String, with style: Style) {
         self.attributedText = makeAttributedString(for: text, with: style)
         self.numberOfLines = style.numberOfLines
@@ -156,6 +240,7 @@ extension UILabel {
     
     private func makeAttributedString(for text: String, with style: Style) -> NSAttributedString {
         let attributes = makeAttributes(for: style)
+        print(text)
         return NSAttributedString(string: text, attributes: attributes)
     }
     
@@ -196,6 +281,11 @@ final class Render {
         
         label.setText(textStyle.text, with: style)
     }
+    
+    func render(label: UILabel, with richText: RichText) {
+        label.setRichText(richText.text, with: theme!)
+        label.numberOfLines = 0
+    }
 }
 
 let themeJSON = """
@@ -211,7 +301,8 @@ let viewControllerJSON = """
 {
 "textStyle1": { "text": "Hello World!", "style": "title" },
 "textStyle2": { "text": "Welcome to my new framework", "style": "body" },
-"textStyle3": { "text": "Backend driven style but layout is done on app side", "style": { "size": 14.0, "color": "green"} }
+"textStyle3": { "text": "Backend driven style but layout is done on app side", "style": { "size": 14.0, "color": "green"} },
+"textStyle4": "<title>Hey!</title><body>Not</body><title>LOL</title>"
 }
 """.data(using: .utf8)!
 
@@ -221,6 +312,7 @@ final class myViewController : UIViewController {
         let textStyle1: TextStyle
         let textStyle2: TextStyle
         let textStyle3: TextStyle
+        let textStyle4: RichText
     }
     
     private var label1: UILabel = {
@@ -235,18 +327,28 @@ final class myViewController : UIViewController {
         let label = UILabel(frame: CGRect(x: 0, y: 100, width: 300, height: 50))
         return label
     }()
+    private var label4: UILabel = {
+        let label = UILabel(frame: CGRect(x: 0, y: 150, width: 300, height: 150))
+        return label
+    }()
     
     private var render: Render = Render()
     
     private var data = MyViewControllerData(textStyle1: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")),
                                             textStyle2: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")),
-                                            textStyle3: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")))
+                                            textStyle3: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")),
+                                            textStyle4: RichText(text: ""))
         {
         didSet {
             [(label1, data.textStyle1),
              (label2, data.textStyle2),
              (label3, data.textStyle3)]
-                .forEach { render.render(label: $0.0, with: $0.1) }
+                .forEach {
+                    render.render(label: $0.0, with: $0.1)
+                }
+            
+            // To improve
+            render.render(label: label4, with: data.textStyle4)
         }
     }
     
@@ -256,7 +358,7 @@ final class myViewController : UIViewController {
         let view = UIView()
         view.backgroundColor = .white
         
-        [label1, label2, label3].forEach {
+        [label1, label2, label3, label4].forEach {
             view.addSubview($0)
         }
         
