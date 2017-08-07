@@ -1,5 +1,5 @@
 //: A UIKit based Playground to present user interface
-  
+
 import UIKit
 import PlaygroundSupport
 
@@ -171,71 +171,85 @@ extension UILabel {
         self.numberOfLines = style.numberOfLines
     }
     
+    private enum Step {
+        case open
+        case content
+        case close
+        case unknown
+    }
+    
+    private enum ElementType {
+        case openTag(String)
+        case content(String)
+        case closeTag(String)
+    }
+    
+    private struct Element {
+        var openTag: String
+        var content: String
+        var closeTag: String
+    }
+    
     private func makeAttributedString(for text: String, with theme: Theme) -> NSAttributedString {
+        var elements = parse(text: text)
         var richText = [(String, Style)]()
-        var styleName = ""
-        var styleNameClosing = ""
-        var currentText = ""
-        
-        var isText = true
-        var closing = false
-        
-        var ignore = false
-        
-        var offset = 0
-        while offset < text.characters.count {
-            let c = text.characters[text.characters.index(text.characters.startIndex, offsetBy: offset)]
-            
-            if c == "<" {
-                isText = false
-                ignore = true
-            }
-            
-            if c == ">" {
-                isText = true
-                ignore = true
-            }
-            
-            //            print("current: \(c) - styleName: \(styleName) \(styleNameClosing) - text: \(currentText) - scanText: \(isText) - ignore: \(ignore)")
-            
-            if c == "/" {
-                closing = true
-                ignore = true
-            }
-            
-            if ignore {
-                ignore = false
-            } else if !isText {
-                if closing {
-                    styleNameClosing += String(c)
-                } else {
-                    styleName += String(c)
-                }
-            } else {
-                currentText += String(c)
-            }
-            
-            if styleNameClosing == styleName && styleNameClosing.characters.count > 0 {
-                let style = theme.styles[styleName]!
-                richText.append((currentText, style))
-                print("ADDED \(currentText) with style: \(styleName)")
-                
-                currentText = ""
-                styleNameClosing = ""
-                styleName = ""
-                closing = false
-            }
-            
-            offset = offset + 1
-        }
-        
+
         var aText = NSMutableAttributedString()
+        
+        elements.forEach { element in
+            if (element.openTag == element.closeTag) {
+                let style = theme.styles[element.openTag]!
+                richText.append((element.content, style))
+            } else {
+                // error
+            }
+        }
         
         richText.forEach {
             aText.append(makeAttributedString(for: $0.0, with: $0.1))
         }
         
         return aText
+    }
+    
+    private func parse(text: String) -> [Element] {
+        var string = ""
+        var step = Step.unknown
+        var element = Element(openTag: "", content: "", closeTag: "")
+        var elements = [Element]()
+        
+        for character in text.characters {
+            switch character {
+            case "<":
+                if string.characters.count > 0 {
+                    element.content = string
+                    string = ""
+                }
+                step = .open
+                break
+            case ">":
+                if step != .content {
+                    if step == .open {
+                        element.openTag = string
+                    } else if step == .close {
+                        element.closeTag = string
+                        print("e: \(element)")
+                        elements.append(element)
+                        element = Element(openTag: "", content: "", closeTag: "")
+                    }
+                    string = ""
+                }
+                step = .content
+                break
+            case "/":
+                step = .close
+            default:
+                string += String(character)
+                break
+            }
+        }
+
+        return elements
     }
     
     private func makeAttributedString(for text: String, with style: Style) -> NSAttributedString {
@@ -292,7 +306,7 @@ let themeJSON = """
 {
     "styles": {
         "title": { "name": "title", "size": 26.0, "color": "red", "alignmenent": "center" },
-        "body": { "name": "body", "size": 16.0, "color": "black", "alignmenent": "natural" }
+        "body": { "name": "body", "size": 17.0, "color": "blue", "alignmenent": "left" }
     }
 }
 """.data(using: .utf8)!
@@ -370,13 +384,7 @@ final class myViewController : UIViewController {
     private func loadData() {
         let decoder = JSONDecoder()
         do {
-            theme = Theme(styles:
-                [
-                    "title": Style(name: "title", size: 26.0, color: .red, alignment: .center, kern: 1.0),
-                    "body": Style(name: "body", size: 16.0, color: .black, alignment: .natural)
-                ]
-            )
-//            theme = try decoder.decode(Theme.self, from: themeJSON)
+            theme = try decoder.decode(Theme.self, from: themeJSON)
             render.theme = theme
             
             data = try decoder.decode(MyViewControllerData.self, from: viewControllerJSON)
