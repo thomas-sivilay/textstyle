@@ -12,6 +12,7 @@ struct Style: Decodable {
     let lineHeightMultiple: CGFloat
     let paragraphSpacing: CGFloat
     let numberOfLines: Int
+    var markdown: Markdown
     
     private enum CodingKeys: String, CodingKey {
         case name
@@ -45,7 +46,8 @@ struct Style: Decodable {
                      kern: kern ?? 0.0,
                      lineHeightMultiple: lineHeightMultiple ?? 0.0,
                      paragraphSpacing: paragraphSpacing ?? 0.0,
-                     numberOfLines: numberOfLines ?? 1)
+                     numberOfLines: numberOfLines ?? 1,
+                     markdown: .none)
         return
     }
     
@@ -56,7 +58,8 @@ struct Style: Decodable {
          kern: CGFloat = 0.0,
          lineHeightMultiple: CGFloat = 0.0,
          paragraphSpacing: CGFloat = 0.0,
-         numberOfLines: Int = 1
+         numberOfLines: Int = 1,
+         markdown: Markdown = .none
     ) {
         self.name = name
         self.size = size
@@ -66,6 +69,7 @@ struct Style: Decodable {
         self.lineHeightMultiple = lineHeightMultiple
         self.paragraphSpacing = paragraphSpacing
         self.numberOfLines = numberOfLines
+        self.markdown = markdown
     }
 }
 
@@ -158,6 +162,40 @@ extension TextStyle: Decodable {
 
 struct Theme: Decodable {
     let styles: [String: Style] // name-id: Style
+    
+    func style(with tag: String) -> Style? {
+        let splittedTag = tag.split(separator: ":")
+        let styleName = splittedTag[0]
+        print(styleName)
+        var style = styles[String(styleName)]
+        
+        if splittedTag.count > 1 {
+            let markdown = splittedTag[1]
+            print(markdown)
+            switch markdown {
+            case "em":
+                style?.markdown = .emphasize
+                break
+            case "st":
+                style?.markdown = .strong
+                break
+            default:
+                break
+            }
+        }
+        
+        
+        return style
+    }
+}
+
+enum Markdown: Int {
+    case none
+    case emphasize // * * or _ _ -> italic
+    case strong // ** ** or __ __ -> bold
+    case strikethrough
+    case underline
+//    case code // monospace
 }
 
 extension UILabel {
@@ -197,11 +235,11 @@ extension UILabel {
         var aText = NSMutableAttributedString()
         
         elements.forEach { element in
-            if (element.openTag == element.closeTag) {
-                let style = theme.styles[element.openTag]!
+            if let style = theme.style(with: element.openTag), element.openTag == element.closeTag {
                 richText.append((element.content, style))
             } else {
                 // error
+                print("ERROR, can't find style with name: \(element.openTag)")
             }
         }
         
@@ -218,14 +256,52 @@ extension UILabel {
         var step = Step.unknown
         var element = Element(openTag: "", content: "", closeTag: "")
         var elements = [Element]()
+        var subElements = [Element]()
+        var markdownSymbol = ""
+        var previousCharacter = text.characters[text.characters.index(text.characters.startIndex, offsetBy: offset)]
         
         while offset < text.characters.count {
             let character = text.characters[text.characters.index(text.characters.startIndex, offsetBy: offset)]
+            let nextIndex = text.characters.index(text.characters.startIndex, offsetBy: offset + 1, limitedBy: text.characters.endIndex)
             
             switch String(character) {
+            case "*", "_":
+                var nextCharacter: String? = nil
+                if let nextIndex = nextIndex {
+                    nextCharacter = String(text.characters[nextIndex])
+                }
+
+                if (markdownSymbol.characters.count == 1 && markdownSymbol == String(character)) || (markdownSymbol.characters.count == 2 && markdownSymbol == (String(character) + nextCharacter!)) {
+                    // CLOSING
+                    switch step {
+                    case .content:
+                        // EMBEDDED
+                        print("markdownSymbol: \(markdownSymbol)")
+                        let symbol = markdownSymbol == "*" || markdownSymbol == "_" ? "em" : "st"
+                        let openTag = "\(element.openTag):\(symbol)"
+                        subElements.append(Element(openTag: openTag, content: string, closeTag: ""))
+                        string = ""
+                        break
+                    default:
+                        break
+                    }
+                    markdownSymbol = ""
+                } else {
+                    if nextCharacter == String(character) {
+                        print("HEEEERE")
+                        markdownSymbol = String(character) + nextCharacter!
+                        print(markdownSymbol)
+                        offset += 1
+                    } else {
+                        markdownSymbol = String(character)
+                    }
+                }
+                break
             case "\\":
-                offset += 1
-                string += String(text.characters[text.characters.index(text.characters.startIndex, offsetBy: offset)])
+                if let nextIndex = nextIndex {
+                    offset += 1
+                    string += String(text.characters[nextIndex])
+                }
                 break
             case "<":
                 if string.characters.count > 0 {
@@ -241,8 +317,14 @@ extension UILabel {
                     } else if step == .close {
                         element.closeTag = string
                         print("e: \(element)")
+                        for var element in subElements {
+                            element.closeTag = element.openTag
+                            elements.append(element)
+                        }
+                        subElements = [Element]()
                         elements.append(element)
                         element = Element(openTag: "", content: "", closeTag: "")
+                        step = .unknown
                     }
                     string = ""
                 }
@@ -258,19 +340,27 @@ extension UILabel {
             offset += 1
         }
 
+        print(elements)
         return elements
     }
     
     private func makeAttributedString(for text: String, with style: Style) -> NSAttributedString {
         let attributes = makeAttributes(for: style)
-        print(text)
         return NSAttributedString(string: text, attributes: attributes)
     }
     
     private func makeAttributes(for style: Style) -> [NSAttributedStringKey: Any] {
         var attributes = [NSAttributedStringKey: Any]()
         attributes[NSAttributedStringKey.foregroundColor] = style.color
-        attributes[NSAttributedStringKey.font] = UIFont.systemFont(ofSize: style.size)
+        
+        if style.markdown == Markdown.emphasize {
+            attributes[NSAttributedStringKey.font] = UIFont.italicSystemFont(ofSize: style.size)
+        } else if style.markdown == Markdown.strong {
+            attributes[NSAttributedStringKey.font] = UIFont.boldSystemFont(ofSize: style.size)
+        } else {
+            attributes[NSAttributedStringKey.font] = UIFont.systemFont(ofSize: style.size)
+        }
+        
         attributes[NSAttributedStringKey.kern] = style.kern
         attributes[NSAttributedStringKey.paragraphStyle] = makeParagraphStyle(for: style)
         
@@ -322,10 +412,10 @@ let themeJSON = """
 
 let viewControllerJSON = """
 {
-"textStyle1": { "text": "Hello World!, "style": "title" },
+"textStyle1": { "text": "Hello World!", "style": "title" },
 "textStyle2": { "text": "Welcome to my new framework", "style": "body" },
 "textStyle3": { "text": "Backend driven style but layout is done on app side", "style": { "size": 14.0, "color": "green"} },
-"textStyle4": "<title>Hey!</title><body>Not</body><title>LOL</title>"
+"textStyle4": "<title>__Hello__ *World!*</title><body>Not</body><title>LOL</title>"
 }
 """.data(using: .utf8)!
 
