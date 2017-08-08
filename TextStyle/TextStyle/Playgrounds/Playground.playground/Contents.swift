@@ -213,13 +213,20 @@ extension UILabel {
     }
     
     private func parse(text: String) -> [Element] {
+        var offset = 0
         var string = ""
         var step = Step.unknown
         var element = Element(openTag: "", content: "", closeTag: "")
         var elements = [Element]()
         
-        for character in text.characters {
-            switch character {
+        while offset < text.characters.count {
+            let character = text.characters[text.characters.index(text.characters.startIndex, offsetBy: offset)]
+            
+            switch String(character) {
+            case "\\":
+                offset += 1
+                string += String(text.characters[text.characters.index(text.characters.startIndex, offsetBy: offset)])
+                break
             case "<":
                 if string.characters.count > 0 {
                     element.content = string
@@ -247,6 +254,8 @@ extension UILabel {
                 string += String(character)
                 break
             }
+            
+            offset += 1
         }
 
         return elements
@@ -313,7 +322,7 @@ let themeJSON = """
 
 let viewControllerJSON = """
 {
-"textStyle1": { "text": "Hello World!", "style": "title" },
+"textStyle1": { "text": "Hello World!, "style": "title" },
 "textStyle2": { "text": "Welcome to my new framework", "style": "body" },
 "textStyle3": { "text": "Backend driven style but layout is done on app side", "style": { "size": 14.0, "color": "green"} },
 "textStyle4": "<title>Hey!</title><body>Not</body><title>LOL</title>"
@@ -386,7 +395,6 @@ final class myViewController : UIViewController {
         do {
             theme = try decoder.decode(Theme.self, from: themeJSON)
             render.theme = theme
-            
             data = try decoder.decode(MyViewControllerData.self, from: viewControllerJSON)
         } catch {
             print(error)
