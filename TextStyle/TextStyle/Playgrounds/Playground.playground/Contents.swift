@@ -2,6 +2,7 @@
 
 import UIKit
 import PlaygroundSupport
+import XCTest
 
 struct Style: Decodable {
     let name: String?
@@ -166,12 +167,10 @@ struct Theme: Decodable {
     func style(with tag: String) -> Style? {
         let splittedTag = tag.split(separator: ":")
         let styleName = splittedTag[0]
-        print(styleName)
         var style = styles[String(styleName)]
         
         if splittedTag.count > 1 {
             let markdown = splittedTag[1]
-            print(markdown)
             switch markdown {
             case "em":
                 style?.markdown = .emphasize
@@ -198,16 +197,7 @@ enum Markdown: Int {
 //    case code // monospace
 }
 
-extension UILabel {
-    func setRichText(_ text: String, with theme: Theme) {
-        self.attributedText = makeAttributedString(for: text, with: theme)
-        self.numberOfLines = 0
-    }
-    
-    func setText(_ text: String, with style: Style) {
-        self.attributedText = makeAttributedString(for: text, with: style)
-        self.numberOfLines = style.numberOfLines
-    }
+final class ElementParser {
     
     private enum Step {
         case open
@@ -222,35 +212,11 @@ extension UILabel {
         case closeTag(String)
     }
     
-    private struct Element {
-        var openTag: String
-        var content: String
-        var closeTag: String
-    }
-    
-    private func makeAttributedString(for text: String, with theme: Theme) -> NSAttributedString {
-        var elements = parse(text: text)
-        var richText = [(String, Style)]()
-
-        var aText = NSMutableAttributedString()
-        
-        elements.forEach { element in
-            if let style = theme.style(with: element.openTag), element.openTag == element.closeTag {
-                richText.append((element.content, style))
-            } else {
-                // error
-                print("ERROR, can't find style with name: \(element.openTag)")
-            }
+    class func parse(text: String) -> [Element] {
+        guard text.characters.count > 0 else {
+            return [Element]()
         }
         
-        richText.forEach {
-            aText.append(makeAttributedString(for: $0.0, with: $0.1))
-        }
-        
-        return aText
-    }
-    
-    private func parse(text: String) -> [Element] {
         var offset = 0
         var string = ""
         var step = Step.unknown
@@ -270,13 +236,12 @@ extension UILabel {
                 if let nextIndex = nextIndex {
                     nextCharacter = String(text.characters[nextIndex])
                 }
-
+                
                 if (markdownSymbol.characters.count == 1 && markdownSymbol == String(character)) || (markdownSymbol.characters.count == 2 && markdownSymbol == (String(character) + nextCharacter!)) {
                     // CLOSING
                     switch step {
                     case .content:
                         // EMBEDDED
-                        print("markdownSymbol: \(markdownSymbol)")
                         let symbol = markdownSymbol == "*" || markdownSymbol == "_" ? "em" : "st"
                         let openTag = "\(element.openTag):\(symbol)"
                         subElements.append(Element(openTag: openTag, content: string, closeTag: ""))
@@ -288,9 +253,7 @@ extension UILabel {
                     markdownSymbol = ""
                 } else {
                     if nextCharacter == String(character) {
-                        print("HEEEERE")
                         markdownSymbol = String(character) + nextCharacter!
-                        print(markdownSymbol)
                         offset += 1
                     } else {
                         markdownSymbol = String(character)
@@ -339,9 +302,48 @@ extension UILabel {
             
             offset += 1
         }
-
-        print(elements)
+        
         return elements
+    }
+}
+
+struct Element {
+    var openTag: String
+    var content: String
+    var closeTag: String
+}
+
+extension UILabel {
+    func setRichText(_ text: String, with theme: Theme) {
+        self.attributedText = makeAttributedString(for: text, with: theme)
+        self.numberOfLines = 0
+    }
+    
+    func setText(_ text: String, with style: Style) {
+        self.attributedText = makeAttributedString(for: text, with: style)
+        self.numberOfLines = style.numberOfLines
+    }
+    
+    private func makeAttributedString(for text: String, with theme: Theme) -> NSAttributedString {
+        var elements = ElementParser.parse(text: text)
+        var richText = [(String, Style)]()
+
+        var aText = NSMutableAttributedString()
+        
+        elements.forEach { element in
+            if let style = theme.style(with: element.openTag), element.openTag == element.closeTag {
+                richText.append((element.content, style))
+            } else {
+                // error
+                print("ERROR, can't find style with name: \(element.openTag)")
+            }
+        }
+        
+        richText.forEach {
+            aText.append(makeAttributedString(for: $0.0, with: $0.1))
+        }
+        
+        return aText
     }
     
     private func makeAttributedString(for text: String, with style: Style) -> NSAttributedString {
@@ -493,3 +495,28 @@ final class myViewController : UIViewController {
 }
 
 PlaygroundPage.current.liveView = myViewController()
+
+final class Tests: XCTestCase {
+    
+    override func setUp() {
+        super.setUp()
+    }
+    
+    override func tearDown() {
+        super.tearDown()
+    }
+    
+    func testEmptyText() {
+        let elements = ElementParser.parse(text: "")
+        XCTAssertTrue(elements.count == 0)
+    }
+    
+//    func testPerformanceExample() {
+//        // This is an example of a performance test case.
+//        self.measure {
+//            // Put the code you want to measure the time of here.
+//        }
+//    }
+}
+
+Tests.defaultTestSuite.run()
