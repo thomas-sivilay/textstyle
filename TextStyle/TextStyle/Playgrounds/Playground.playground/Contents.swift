@@ -278,7 +278,6 @@ final class ElementParser {
                         element.openTag = string
                     } else if step == .close {
                         element.closeTag = string
-                        print("e: \(element)")
                         for var element in subElements {
                             element.closeTag = element.openTag
                             elements.append(element)
@@ -693,12 +692,34 @@ final class Tests: XCTestCase {
         test(text: text, equalTo: elements)
     }
     
-//    func testPerformanceExample() {
-//        // This is an example of a performance test case.
-//        self.measure {
-//            // Put the code you want to measure the time of here.
-//        }
-//    }
+    func testPerformanceSingleTag() {
+        let text = "<title>Hello world !</title>"
+        self.measure {
+            ElementParser.parse(text: text)
+        }
+    }
+    
+    func testPerformanceMultipleTags() {
+        let text = "<title>*Hello world !*</title><body>**This is a body**</body>"
+        self.measure {
+            ElementParser.parse(text: text)
+        }
+    }
+    
+    func testPerformanceMultipleTagsComplex() {
+        let text = "<title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title>"
+        self.measure {
+            ElementParser.parse(text: text)
+        }
+    }
+    
+    func testPerformanceMultipleTagsComplexWithMardowns() {
+        let text = "<title>**Hello world !**</title><title>__Hello__ **world** *!*</title><title>**Hello** __world__ _!_</title><title>_Hello_ __world !__</title><title>*Hello world !*</title><title>**Hello** **world** **!**</title><title>__Hello__ _world_ _!_</title><title>__Hello world !__</title><title>__Hello__ world__ !__</title><title>_Hello_ **world** _!_</title><title>**Hello world !**</title><title>__Hello__ **world** *!*</title><title>**Hello** __world__ _!_</title><title>_Hello_ __world !__</title><title>*Hello world !*</title><title>**Hello** **world** **!**</title><title>__Hello__ _world_ _!_</title><title>__Hello world !__</title><title>__Hello__ world__ !__</title><title>_Hello_ **world** _!_</title><title>**Hello world !**</title><title>__Hello__ **world** *!*</title><title>**Hello** __world__ _!_</title><title>_Hello_ __world !__</title><title>*Hello world !*</title><title>**Hello** **world** **!**</title><title>__Hello__ _world_ _!_</title><title>__Hello world !__</title><title>__Hello__ world__ !__</title><title>_Hello_ **world** _!_</title>"
+        self.measure {
+            ElementParser.parse(text: text)
+        }
+    }
+
 }
 
 Tests.defaultTestSuite.run()
