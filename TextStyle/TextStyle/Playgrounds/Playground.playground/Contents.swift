@@ -192,8 +192,8 @@ enum Markdown: Int {
     case none
     case emphasize // * * or _ _ -> italic
     case strong // ** ** or __ __ -> bold
-    case strikethrough
-    case underline
+//    case strikethrough
+//    case underline
 //    case code // monospace
 }
 
@@ -301,7 +301,9 @@ final class ElementParser {
             offset += 1
         }
         
-        return elements
+        let filteredElement = elements.filter { $0.content != "" }
+        
+        return filteredElement
     }
 }
 
@@ -323,10 +325,10 @@ extension UILabel {
     }
     
     private func makeAttributedString(for text: String, with theme: Theme) -> NSAttributedString {
-        var elements = ElementParser.parse(text: text)
+        let elements = ElementParser.parse(text: text)
         var richText = [(String, Style)]()
 
-        var aText = NSMutableAttributedString()
+        let aText = NSMutableAttributedString()
         
         elements.forEach { element in
             if let style = theme.style(with: element.openTag), element.openTag == element.closeTag {
@@ -568,9 +570,7 @@ final class Tests: XCTestCase {
         let text = "<title>*Hello world !*</title><body>*This is a body*</body>"
         let elements = [
             Element(openTag: "title:em", content: "Hello world !", closeTag: "title:em"),
-            Element(openTag: "title", content: "", closeTag: "title"),
             Element(openTag: "body:em", content: "This is a body", closeTag: "body:em"),
-            Element(openTag: "body", content: "", closeTag: "body"),
             ]
         test(text: text, equalTo: elements)
     }
@@ -579,7 +579,6 @@ final class Tests: XCTestCase {
         let text = "<title>_Hello world !_</title>"
         let elements = [
             Element(openTag: "title:em", content: "Hello world !", closeTag: "title:em"),
-            Element(openTag: "title", content: "", closeTag: "title"),
             ]
         test(text: text, equalTo: elements)
     }
@@ -589,9 +588,7 @@ final class Tests: XCTestCase {
         let elements = [
             Element(openTag: "title:em", content: "Hello", closeTag: "title:em"),
             Element(openTag: "title:em", content: "world !", closeTag: "title:em"),
-            Element(openTag: "title", content: "", closeTag: "title"),
             Element(openTag: "body:em", content: "This is a body", closeTag: "body:em"),
-            Element(openTag: "body", content: "", closeTag: "body"),
             ]
         test(text: text, equalTo: elements)
     }
@@ -601,9 +598,7 @@ final class Tests: XCTestCase {
         let elements = [
             Element(openTag: "title:em", content: "Hello", closeTag: "title:em"),
             Element(openTag: "title:em", content: "world !", closeTag: "title:em"),
-            Element(openTag: "title", content: "", closeTag: "title"),
             Element(openTag: "body:em", content: "This is a body", closeTag: "body:em"),
-            Element(openTag: "body", content: "", closeTag: "body"),
             ]
         test(text: text, equalTo: elements)
     }
@@ -612,7 +607,6 @@ final class Tests: XCTestCase {
         let text = "<title>**Hello world !**</title>"
         let elements = [
             Element(openTag: "title:st", content: "Hello world !", closeTag: "title:st"),
-            Element(openTag: "title", content: "", closeTag: "title"),
             ]
         test(text: text, equalTo: elements)
     }
@@ -621,7 +615,6 @@ final class Tests: XCTestCase {
         let text = "<title>__Hello world !__</title>"
         let elements = [
             Element(openTag: "title:st", content: "Hello world !", closeTag: "title:st"),
-            Element(openTag: "title", content: "", closeTag: "title"),
             ]
         test(text: text, equalTo: elements)
     }
@@ -651,9 +644,7 @@ final class Tests: XCTestCase {
         let elements = [
             Element(openTag: "title:st", content: "Hello", closeTag: "title:st"),
             Element(openTag: "title", content: "world !", closeTag: "title"),
-            Element(openTag: "title", content: "", closeTag: "title"),
             Element(openTag: "body:st", content: "This is a body", closeTag: "body:st"),
-            Element(openTag: "body", content: "", closeTag: "body"),
             ]
         test(text: text, equalTo: elements)
     }
@@ -663,9 +654,7 @@ final class Tests: XCTestCase {
         let elements = [
             Element(openTag: "title:em", content: "Hello", closeTag: "title:em"),
             Element(openTag: "title:em", content: "world !", closeTag: "title:em"),
-            Element(openTag: "title", content: "", closeTag: "title"),
             Element(openTag: "body:st", content: "This is a body", closeTag: "body:st"),
-            Element(openTag: "body", content: "", closeTag: "body"),
             ]
         test(text: text, equalTo: elements)
     }
@@ -674,9 +663,7 @@ final class Tests: XCTestCase {
         let text = "<title>*Hello world !*</title><body>**This is a body**</body>"
         let elements = [
             Element(openTag: "title:em", content: "Hello world !", closeTag: "title:em"),
-            Element(openTag: "title", content: "", closeTag: "title"),
             Element(openTag: "body:st", content: "This is a body", closeTag: "body:st"),
-            Element(openTag: "body", content: "", closeTag: "body"),
             ]
         test(text: text, equalTo: elements)
     }
@@ -687,7 +674,6 @@ final class Tests: XCTestCase {
             Element(openTag: "title", content: "Hello world !", closeTag: "title"),
             Element(openTag: ":em", content:"LOL", closeTag: ":em"),
             Element(openTag: "body:st", content: "This is a body", closeTag: "body:st"),
-            Element(openTag: "body", content: "", closeTag: "body"),
             ]
         test(text: text, equalTo: elements)
     }
@@ -695,28 +681,28 @@ final class Tests: XCTestCase {
     func testPerformanceSingleTag() {
         let text = "<title>Hello world !</title>"
         self.measure {
-            ElementParser.parse(text: text)
+            _ = ElementParser.parse(text: text)
         }
     }
     
     func testPerformanceMultipleTags() {
         let text = "<title>*Hello world !*</title><body>**This is a body**</body>"
         self.measure {
-            ElementParser.parse(text: text)
+            _ = ElementParser.parse(text: text)
         }
     }
     
     func testPerformanceMultipleTagsComplex() {
         let text = "<title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title><title>Hello world !</title>"
         self.measure {
-            ElementParser.parse(text: text)
+            _ = ElementParser.parse(text: text)
         }
     }
     
     func testPerformanceMultipleTagsComplexWithMardowns() {
         let text = "<title>**Hello world !**</title><title>__Hello__ **world** *!*</title><title>**Hello** __world__ _!_</title><title>_Hello_ __world !__</title><title>*Hello world !*</title><title>**Hello** **world** **!**</title><title>__Hello__ _world_ _!_</title><title>__Hello world !__</title><title>__Hello__ world__ !__</title><title>_Hello_ **world** _!_</title><title>**Hello world !**</title><title>__Hello__ **world** *!*</title><title>**Hello** __world__ _!_</title><title>_Hello_ __world !__</title><title>*Hello world !*</title><title>**Hello** **world** **!**</title><title>__Hello__ _world_ _!_</title><title>__Hello world !__</title><title>__Hello__ world__ !__</title><title>_Hello_ **world** _!_</title><title>**Hello world !**</title><title>__Hello__ **world** *!*</title><title>**Hello** __world__ _!_</title><title>_Hello_ __world !__</title><title>*Hello world !*</title><title>**Hello** **world** **!**</title><title>__Hello__ _world_ _!_</title><title>__Hello world !__</title><title>__Hello__ world__ !__</title><title>_Hello_ **world** _!_</title>"
         self.measure {
-            ElementParser.parse(text: text)
+            _ = ElementParser.parse(text: text)
         }
     }
 
