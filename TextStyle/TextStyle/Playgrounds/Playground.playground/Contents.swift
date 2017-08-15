@@ -197,7 +197,127 @@ enum Markdown: Int {
 //    case code // monospace
 }
 
-final class ElementParser {
+enum Token {
+    case markdown(Markdown)
+    case string(String)
+    case openTag(String)
+    case closeTag(String)
+}
+
+enum TokenizingError: Error {
+    case unknownCharacter
+    case invalidTag
+}
+
+struct Tokenizer {
+    private var iterator: String.CharacterView.Iterator
+    private var pushedBackCharacter: Character?
+    private var buffer = String()
+
+    // MARK: - Initializer
+
+    init(text: String) {
+        iterator = text.characters.makeIterator()
+    }
+
+    // MARK: -
+
+    mutating func nextToken() throws -> Token? {
+        while let ch = nextCharacter() {
+            switch ch {
+            case "*", "_":
+                if let res = checkBuffer(with: ch) {
+                    return .string(res)
+                } else {
+                    return try markdown(startingWith: ch)
+                }
+            case "<":
+                if let res = checkBuffer(with: ch) {
+                    return .string(res)
+                } else {
+                    return try tag()
+                }
+            default:
+                buffer.append(ch)
+            }
+        }
+        return nil
+    }
+
+    // MARK: - Private
+    
+    private mutating func checkBuffer(with character: Character) -> String? {
+        if buffer.characters.count > 0 {
+            let res = buffer
+            buffer = String()
+            pushedBackCharacter = character
+            return res
+        } else {
+            return nil
+        }
+    }
+    
+    private mutating func markdown(startingWith character: Character) throws -> Token {
+        var tokenText = String()
+        while let ch = nextCharacter() {
+            switch ch {
+            case character:
+                return .markdown(.strong)
+            default:
+                pushedBackCharacter = ch
+                return .markdown(.emphasize)
+            }
+        }
+        return .markdown(.emphasize)
+    }
+    
+    private mutating func tag() throws -> Token {
+        var tokenText = String()
+        while let ch = nextCharacter() {
+            switch ch {
+            case ">":
+                if tokenText.first == "/" {
+                    tokenText.removeFirst()
+                    return .closeTag(tokenText)
+                } else {
+                    return .openTag(tokenText)
+                }
+            default:
+                tokenText.append(ch)
+            }
+        }
+        
+        throw TokenizingError.invalidTag
+    }
+
+    private mutating func nextCharacter() -> Character? {
+        if let next = pushedBackCharacter {
+            pushedBackCharacter = nil
+            return next
+        }
+        return iterator.next()
+    }
+}
+
+struct Element {
+    var openTag: String
+    var content: String
+    var closeTag: String
+    
+    init(openTag: String = "",
+         content: String = "",
+         closeTag: String = "") {
+        self.openTag = openTag
+        self.content = content
+        self.closeTag = closeTag
+    }
+}
+
+class ElementParser {
+    class func parse(text: String) -> [Element] {
+        var tokenizer = Tokenizer(text: text)
+        return try! self.parse(with: tokenizer)
+    }
     
     private enum Step {
         case open
@@ -206,112 +326,168 @@ final class ElementParser {
         case unknown
     }
     
-    private enum ElementType {
-        case openTag(String)
-        case content(String)
-        case closeTag(String)
-    }
-    
-    class func parse(text: String) -> [Element] {
-        guard text.characters.count > 0 else {
-            return [Element]()
-        }
-        
-        var offset = 0
-        var string = ""
-        var step = Step.unknown
-        var element = Element(openTag: "", content: "", closeTag: "")
+    class func parse(with tokenizer: Tokenizer) throws -> [Element] {
+        var tokenizer = tokenizer
         var elements = [Element]()
-        var subElements = [Element]()
-        var markdownSymbol = ""
+        var element = Element()
+        var subElement = Element()
+        var markdown = 0
         
-        while offset < text.characters.count {
-            let character = text.characters[text.characters.index(text.characters.startIndex, offsetBy: offset)]
-            let nextIndex = text.characters.index(text.characters.startIndex, offsetBy: offset + 1, limitedBy: text.characters.endIndex)
-            
-            switch String(character) {
-            case "*", "_":
-                var nextCharacter: String? = nil
-                if let nextIndex = nextIndex {
-                    nextCharacter = String(text.characters[nextIndex])
-                }
-                
-                if (markdownSymbol.characters.count == 1 && markdownSymbol == String(character)) || (markdownSymbol.characters.count == 2 && markdownSymbol == (String(character) + nextCharacter!)) {
-                    // CLOSING
-                    switch step {
-                    case .content:
-                        // EMBEDDED
-                        let symbol = markdownSymbol == "*" || markdownSymbol == "_" ? "em" : "st"
-                        let openTag = "\(element.openTag):\(symbol)"
-                        subElements.append(Element(openTag: openTag, content: string, closeTag: ""))
-                        string = ""
-                        break
-                    default:
-                        break
-                    }
-                    markdownSymbol = ""
+        while let token = try tokenizer.nextToken() {
+            switch token {
+            case let .openTag(tag):
+                element.openTag = tag
+            case let .closeTag(tag):
+                element.closeTag = tag
+                elements.append(element)
+                element = Element()
+            case let .string(s):
+                if subElement.openTag != "" {
+                    subElement.content = s
                 } else {
-                    if nextCharacter == String(character) {
-                        markdownSymbol = String(character) + nextCharacter!
-                        offset += 1
+                    element.content = s
+                }
+            case let .markdown(d):
+                if markdown == 0 {
+                    if element.openTag != "" {
+                        subElement.openTag = "\(element.openTag):em"
                     } else {
-                        markdownSymbol = String(character)
+                        element.openTag = "markdown"
                     }
-                }
-                break
-            case "\\":
-                if let nextIndex = nextIndex {
-                    offset += 1
-                    string += String(text.characters[nextIndex])
-                }
-                break
-            case "<":
-                if string.characters.count > 0 {
-                    element.content = string
-                    string = ""
-                }
-                step = .open
-                break
-            case ">":
-                if step != .content {
-                    if step == .open {
-                        element.openTag = string
-                    } else if step == .close {
-                        element.closeTag = string
-                        for var element in subElements {
-                            element.closeTag = element.openTag
-                            elements.append(element)
-                        }
-                        subElements = [Element]()
+                    markdown += 1
+                } else {
+                    if element.openTag != "" {
+                        subElement.closeTag = "\(element.openTag):em"
+                        elements.append(subElement)
+                        subElement = Element()
+                    } else {
+                        element.closeTag = "markdown"
                         elements.append(element)
-                        element = Element(openTag: "", content: "", closeTag: "")
-                        step = .unknown
+                        element = Element()
                     }
-                    string = ""
+                    markdown = 0
                 }
-                step = .content
-                break
-            case "/":
-                step = .close
-            default:
-                string += String(character)
-                break
             }
-            
-            offset += 1
         }
         
-        let filteredElement = elements.filter { $0.content != "" }
-        
-        return filteredElement
+        return elements.filter { $0.content != "" }
     }
 }
 
-struct Element {
-    var openTag: String
-    var content: String
-    var closeTag: String
-}
+//let text = "<title>Hellow</title><body>World</body>"
+let text = "<title>__Hello____world !__</title><body>__This is a body__</body>"
+let e = ElementParser.parse(text: text)
+print("Parsed: \(e)")
+
+//final class ElementParser {
+//
+//    private enum Step {
+//        case open
+//        case content
+//        case close
+//        case unknown
+//    }
+//
+//    private enum ElementType {
+//        case openTag(String)
+//        case content(String)
+//        case closeTag(String)
+//    }
+//
+//    class func parse(text: String) -> [Element] {
+//        guard text.characters.count > 0 else {
+//            return [Element]()
+//        }
+//
+//        var offset = 0
+//        var string = ""
+//        var step = Step.unknown
+//        var element = Element(openTag: "", content: "", closeTag: "")
+//        var elements = [Element]()
+//        var subElements = [Element]()
+//        var markdownSymbol = ""
+//
+//        while offset < text.characters.count {
+//            let character = text.characters[text.characters.index(text.characters.startIndex, offsetBy: offset)]
+//            let nextIndex = text.characters.index(text.characters.startIndex, offsetBy: offset + 1, limitedBy: text.characters.endIndex)
+//
+//            switch String(character) {
+//            case "*", "_":
+//                var nextCharacter: String? = nil
+//                if let nextIndex = nextIndex {
+//                    nextCharacter = String(text.characters[nextIndex])
+//                }
+//
+//                if (markdownSymbol.characters.count == 1 && markdownSymbol == String(character)) || (markdownSymbol.characters.count == 2 && markdownSymbol == (String(character) + nextCharacter!)) {
+//                    // CLOSING
+//                    switch step {
+//                    case .content:
+//                        // EMBEDDED
+//                        let symbol = markdownSymbol == "*" || markdownSymbol == "_" ? "em" : "st"
+//                        let openTag = "\(element.openTag):\(symbol)"
+//                        subElements.append(Element(openTag: openTag, content: string, closeTag: ""))
+//                        string = ""
+//                        break
+//                    default:
+//                        break
+//                    }
+//                    markdownSymbol = ""
+//                } else {
+//                    if nextCharacter == String(character) {
+//                        markdownSymbol = String(character) + nextCharacter!
+//                        offset += 1
+//                    } else {
+//                        markdownSymbol = String(character)
+//                    }
+//                }
+//                break
+//            case "\\":
+//                if let nextIndex = nextIndex {
+//                    offset += 1
+//                    string += String(text.characters[nextIndex])
+//                }
+//                break
+//            case "<":
+//                if string.characters.count > 0 {
+//                    element.content = string
+//                    string = ""
+//                }
+//                step = .open
+//                break
+//            case ">":
+//                if step != .content {
+//                    if step == .open {
+//                        element.openTag = string
+//                    } else if step == .close {
+//                        element.closeTag = string
+//                        for var element in subElements {
+//                            element.closeTag = element.openTag
+//                            elements.append(element)
+//                        }
+//                        subElements = [Element]()
+//                        elements.append(element)
+//                        element = Element(openTag: "", content: "", closeTag: "")
+//                        step = .unknown
+//                    }
+//                    string = ""
+//                }
+//                step = .content
+//                break
+//            case "/":
+//                step = .close
+//            default:
+//                string += String(character)
+//                break
+//            }
+//
+//            offset += 1
+//        }
+//
+//        let filteredElement = elements.filter { $0.content != "" }
+//
+//        return filteredElement
+//    }
+//}
 
 extension UILabel {
     func setRichText(_ text: String, with theme: Theme) {
@@ -708,4 +884,4 @@ final class Tests: XCTestCase {
 
 }
 
-Tests.defaultTestSuite.run()
+//Tests.defaultTestSuite.run()
