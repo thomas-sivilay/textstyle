@@ -198,8 +198,9 @@ enum Markdown: Int {
 }
 
 enum Token {
-    case markdown(Markdown)
     case string(String)
+    case openMarkdown(Markdown)
+    case closeMarkdown(Markdown)
     case openTag(String)
     case closeTag(String)
 }
@@ -213,6 +214,7 @@ struct Tokenizer {
     private var iterator: String.CharacterView.Iterator
     private var pushedBackCharacter: Character?
     private var buffer = String()
+    private var previousMarkdown: Markdown?
 
     // MARK: - Initializer
 
@@ -223,8 +225,14 @@ struct Tokenizer {
     // MARK: -
 
     mutating func nextToken() throws -> Token? {
-        while let ch = nextCharacter() {
+        while var ch = nextCharacter() {
             switch ch {
+            case "\\":
+                if let nch = nextCharacter() {
+                    buffer.append(nch)
+                    ch = nch
+                }
+                break
             case "*", "_":
                 if let res = checkBuffer(with: ch) {
                     return .string(res)
@@ -258,17 +266,34 @@ struct Tokenizer {
     }
     
     private mutating func markdown(startingWith character: Character) throws -> Token {
-        var tokenText = String()
         while let ch = nextCharacter() {
             switch ch {
             case character:
-                return .markdown(.strong)
+                if let markdown = previousMarkdown {
+                    if markdown == .emphasize {
+                        pushedBackCharacter = ch
+                    }
+                    previousMarkdown = nil
+                    return .closeMarkdown(markdown)
+                }
+                previousMarkdown = .strong
+                return .openMarkdown(.strong)
             default:
                 pushedBackCharacter = ch
-                return .markdown(.emphasize)
+                if let markdown = previousMarkdown {
+                    previousMarkdown = nil
+                    return .closeMarkdown(markdown)
+                }
+                previousMarkdown = .emphasize
+                return .openMarkdown(.emphasize)
             }
         }
-        return .markdown(.emphasize)
+        if let markdown = previousMarkdown {
+            previousMarkdown = nil
+            return .closeMarkdown(markdown)
+        }
+        previousMarkdown = .emphasize
+        return .openMarkdown(.emphasize)
     }
     
     private mutating func tag() throws -> Token {
@@ -331,7 +356,6 @@ class ElementParser {
         var elements = [Element]()
         var element = Element()
         var subElement = Element()
-        var markdown = 0
         
         while let token = try tokenizer.nextToken() {
             switch token {
@@ -347,25 +371,23 @@ class ElementParser {
                 } else {
                     element.content = s
                 }
-            case let .markdown(d):
-                if markdown == 0 {
-                    if element.openTag != "" {
-                        subElement.openTag = "\(element.openTag):em"
-                    } else {
-                        element.openTag = "markdown"
-                    }
-                    markdown += 1
+            case let .openMarkdown(d):
+                let markdownSymbol = d == .emphasize ? "em" : "st"
+                if element.openTag != "" {
+                    subElement.openTag = "\(element.openTag):\(markdownSymbol)"
                 } else {
-                    if element.openTag != "" {
-                        subElement.closeTag = "\(element.openTag):em"
-                        elements.append(subElement)
-                        subElement = Element()
-                    } else {
-                        element.closeTag = "markdown"
-                        elements.append(element)
-                        element = Element()
-                    }
-                    markdown = 0
+                    element.openTag = markdownSymbol
+                }
+            case let .closeMarkdown(d):
+                let markdownSymbol = d == .emphasize ? "em" : "st"
+                if element.openTag != "" && subElement.openTag != "" {
+                    subElement.closeTag = "\(element.openTag):\(markdownSymbol)"
+                    elements.append(subElement)
+                    subElement = Element()
+                } else {
+                    element.closeTag = markdownSymbol
+                    elements.append(element)
+                    element = Element()
                 }
             }
         }
@@ -373,121 +395,6 @@ class ElementParser {
         return elements.filter { $0.content != "" }
     }
 }
-
-//let text = "<title>Hellow</title><body>World</body>"
-let text = "<title>__Hello____world !__</title><body>__This is a body__</body>"
-let e = ElementParser.parse(text: text)
-print("Parsed: \(e)")
-
-//final class ElementParser {
-//
-//    private enum Step {
-//        case open
-//        case content
-//        case close
-//        case unknown
-//    }
-//
-//    private enum ElementType {
-//        case openTag(String)
-//        case content(String)
-//        case closeTag(String)
-//    }
-//
-//    class func parse(text: String) -> [Element] {
-//        guard text.characters.count > 0 else {
-//            return [Element]()
-//        }
-//
-//        var offset = 0
-//        var string = ""
-//        var step = Step.unknown
-//        var element = Element(openTag: "", content: "", closeTag: "")
-//        var elements = [Element]()
-//        var subElements = [Element]()
-//        var markdownSymbol = ""
-//
-//        while offset < text.characters.count {
-//            let character = text.characters[text.characters.index(text.characters.startIndex, offsetBy: offset)]
-//            let nextIndex = text.characters.index(text.characters.startIndex, offsetBy: offset + 1, limitedBy: text.characters.endIndex)
-//
-//            switch String(character) {
-//            case "*", "_":
-//                var nextCharacter: String? = nil
-//                if let nextIndex = nextIndex {
-//                    nextCharacter = String(text.characters[nextIndex])
-//                }
-//
-//                if (markdownSymbol.characters.count == 1 && markdownSymbol == String(character)) || (markdownSymbol.characters.count == 2 && markdownSymbol == (String(character) + nextCharacter!)) {
-//                    // CLOSING
-//                    switch step {
-//                    case .content:
-//                        // EMBEDDED
-//                        let symbol = markdownSymbol == "*" || markdownSymbol == "_" ? "em" : "st"
-//                        let openTag = "\(element.openTag):\(symbol)"
-//                        subElements.append(Element(openTag: openTag, content: string, closeTag: ""))
-//                        string = ""
-//                        break
-//                    default:
-//                        break
-//                    }
-//                    markdownSymbol = ""
-//                } else {
-//                    if nextCharacter == String(character) {
-//                        markdownSymbol = String(character) + nextCharacter!
-//                        offset += 1
-//                    } else {
-//                        markdownSymbol = String(character)
-//                    }
-//                }
-//                break
-//            case "\\":
-//                if let nextIndex = nextIndex {
-//                    offset += 1
-//                    string += String(text.characters[nextIndex])
-//                }
-//                break
-//            case "<":
-//                if string.characters.count > 0 {
-//                    element.content = string
-//                    string = ""
-//                }
-//                step = .open
-//                break
-//            case ">":
-//                if step != .content {
-//                    if step == .open {
-//                        element.openTag = string
-//                    } else if step == .close {
-//                        element.closeTag = string
-//                        for var element in subElements {
-//                            element.closeTag = element.openTag
-//                            elements.append(element)
-//                        }
-//                        subElements = [Element]()
-//                        elements.append(element)
-//                        element = Element(openTag: "", content: "", closeTag: "")
-//                        step = .unknown
-//                    }
-//                    string = ""
-//                }
-//                step = .content
-//                break
-//            case "/":
-//                step = .close
-//            default:
-//                string += String(character)
-//                break
-//            }
-//
-//            offset += 1
-//        }
-//
-//        let filteredElement = elements.filter { $0.content != "" }
-//
-//        return filteredElement
-//    }
-//}
 
 extension UILabel {
     func setRichText(_ text: String, with theme: Theme) {
@@ -670,7 +577,7 @@ final class myViewController : UIViewController {
     }
 }
 
-PlaygroundPage.current.liveView = myViewController()
+//PlaygroundPage.current.liveView = myViewController()
 
 final class Tests: XCTestCase {
     
@@ -795,31 +702,22 @@ final class Tests: XCTestCase {
         test(text: text, equalTo: elements)
     }
 
-    // BUG
-//    func testMarkdownDoubleStrong() {
-//        let text = "<title>__Hello____world !__</title><body>__This is a body__</body>"
-//                let parsedElements = ElementParser.parse(text: text)
-//                print(parsedElements)
-//
-//        let elements = [
-//            Element(openTag: "title:st", content: "Hello", closeTag: "title:st"),
-//            Element(openTag: "title", content: "world !", closeTag: "title"),
-//            Element(openTag: "title", content: "", closeTag: "title"),
-//            Element(openTag: "body:st", content: "This is a body", closeTag: "body:st"),
-//            Element(openTag: "body", content: "", closeTag: "body"),
-//            ]
-//        test(text: text, equalTo: elements)
-//    }
+    func testMarkdownDoubleStrong() {
+        let text = "<title>__Hello____world !__</title><body>__This is a body__</body>"
+        let elements = [
+            Element(openTag: "title:st", content: "Hello", closeTag: "title:st"),
+            Element(openTag: "title:st", content: "world !", closeTag: "title:st"),
+            Element(openTag: "body:st", content: "This is a body", closeTag: "body:st"),
+            ]
+        test(text: text, equalTo: elements)
+    }
 
-    // BUG
     func testMarkdownDoubleStrongWithEmphasize() {
         let text = "<title>__Hello___world !_</title><body>__This is a body__</body>"
-//        let parsedElements = ElementParser.parse(text: text)
-//        print(parsedElements)
         
         let elements = [
             Element(openTag: "title:st", content: "Hello", closeTag: "title:st"),
-            Element(openTag: "title", content: "world !", closeTag: "title"),
+            Element(openTag: "title:em", content: "world !", closeTag: "title:em"),
             Element(openTag: "body:st", content: "This is a body", closeTag: "body:st"),
             ]
         test(text: text, equalTo: elements)
@@ -848,7 +746,7 @@ final class Tests: XCTestCase {
         let text = "<title>Hello world !</title>*LOL*<body>**This is a body**</body>"
         let elements = [
             Element(openTag: "title", content: "Hello world !", closeTag: "title"),
-            Element(openTag: ":em", content:"LOL", closeTag: ":em"),
+            Element(openTag: "em", content:"LOL", closeTag: "em"),
             Element(openTag: "body:st", content: "This is a body", closeTag: "body:st"),
             ]
         test(text: text, equalTo: elements)
@@ -874,7 +772,7 @@ final class Tests: XCTestCase {
             _ = ElementParser.parse(text: text)
         }
     }
-    
+
     func testPerformanceMultipleTagsComplexWithMardowns() {
         let text = "<title>**Hello world !**</title><title>__Hello__ **world** *!*</title><title>**Hello** __world__ _!_</title><title>_Hello_ __world !__</title><title>*Hello world !*</title><title>**Hello** **world** **!**</title><title>__Hello__ _world_ _!_</title><title>__Hello world !__</title><title>__Hello__ world__ !__</title><title>_Hello_ **world** _!_</title><title>**Hello world !**</title><title>__Hello__ **world** *!*</title><title>**Hello** __world__ _!_</title><title>_Hello_ __world !__</title><title>*Hello world !*</title><title>**Hello** **world** **!**</title><title>__Hello__ _world_ _!_</title><title>__Hello world !__</title><title>__Hello__ world__ !__</title><title>_Hello_ **world** _!_</title><title>**Hello world !**</title><title>__Hello__ **world** *!*</title><title>**Hello** __world__ _!_</title><title>_Hello_ __world !__</title><title>*Hello world !*</title><title>**Hello** **world** **!**</title><title>__Hello__ _world_ _!_</title><title>__Hello world !__</title><title>__Hello__ world__ !__</title><title>_Hello_ **world** _!_</title>"
         self.measure {
@@ -884,4 +782,5 @@ final class Tests: XCTestCase {
 
 }
 
-//Tests.defaultTestSuite.run()
+Tests.defaultTestSuite.run()
+
