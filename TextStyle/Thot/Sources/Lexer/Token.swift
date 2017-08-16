@@ -8,10 +8,13 @@
 
 import Foundation
 
+enum TagType {
+    case open
+    case close
+}
+
 enum Token {
     case string(String)
-    case openMarkdown(Markdown)
-    case closeMarkdown(Markdown)
-    case openTag(String)
-    case closeTag(String)
+    case markdown(TagType, markdown: Markdown)
+    case tag(TagType, name: String)
 }

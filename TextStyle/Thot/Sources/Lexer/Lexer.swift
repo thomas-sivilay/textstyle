@@ -72,26 +72,26 @@ struct Lexer {
                         pushedBackCharacter = ch
                     }
                     previousMarkdown = nil
-                    return .closeMarkdown(markdown)
+                    return .markdown(.close, markdown: markdown)
                 }
                 previousMarkdown = .strong
-                return .openMarkdown(.strong)
+                return .markdown(.open, markdown: .strong)
             default:
                 pushedBackCharacter = ch
                 if let markdown = previousMarkdown {
                     previousMarkdown = nil
-                    return .closeMarkdown(markdown)
+                    return .markdown(.close, markdown: markdown)
                 }
                 previousMarkdown = .emphasize
-                return .openMarkdown(.emphasize)
+                return .markdown(.open, markdown: .emphasize)
             }
         }
         if let markdown = previousMarkdown {
             previousMarkdown = nil
-            return .closeMarkdown(markdown)
+            return .markdown(.close, markdown: markdown)
         }
         previousMarkdown = .emphasize
-        return .openMarkdown(.emphasize)
+        return .markdown(.open, markdown: .emphasize)
     }
     
     private mutating func tag() throws -> Token {
@@ -101,9 +101,9 @@ struct Lexer {
             case ">":
                 if tokenText.first == "/" {
                     tokenText.removeFirst()
-                    return .closeTag(tokenText)
+                    return .tag(.close, name: tokenText)
                 } else {
-                    return .openTag(tokenText)
+                    return .tag(.open, name: tokenText)
                 }
             default:
                 tokenText.append(ch)

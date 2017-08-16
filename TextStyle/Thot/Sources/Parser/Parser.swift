@@ -29,35 +29,36 @@ public class ElementParser {
         
         while let token = try tokenizer.nextToken() {
             switch token {
-            case let .openTag(tag):
-                element.openTag = tag
-            case let .closeTag(tag):
-                element.closeTag = tag
-                elements.append(element)
-                element = Element()
-            case let .string(s):
-                if subElement.openTag != "" {
-                    subElement.content = s
-                } else {
-                    element.content = s
-                }
-            case let .openMarkdown(d):
-                let markdownSymbol = d == .emphasize ? "em" : "st"
-                if element.openTag != "" {
-                    subElement.openTag = "\(element.openTag):\(markdownSymbol)"
-                } else {
-                    element.openTag = markdownSymbol
-                }
-            case let .closeMarkdown(d):
-                let markdownSymbol = d == .emphasize ? "em" : "st"
-                if element.openTag != "" && subElement.openTag != "" {
-                    subElement.closeTag = "\(element.openTag):\(markdownSymbol)"
-                    elements.append(subElement)
-                    subElement = Element()
-                } else {
-                    element.closeTag = markdownSymbol
+            case let .tag(type, name: _):
+                element.set(with: token)
+                if type == .close {
                     elements.append(element)
                     element = Element()
+                }
+            case .string(_):
+                if subElement.openTag != "" {
+                    subElement.set(with: token)
+                } else {
+                    element.set(with: token)
+                }
+            case let .markdown(tagType, markdown: markdown):
+                let markdownSymbol = markdown == .emphasize ? "em" : "st"
+                if tagType == .open {
+                    if element.openTag != "" {
+                        subElement.set(with: "\(element.openTag):\(markdownSymbol)", tagType: tagType)
+                    } else {
+                        element.set(with: "\(markdownSymbol)", tagType: tagType)
+                    }
+                } else {
+                    if element.openTag != "" && subElement.openTag != "" {
+                        subElement.set(with: "\(element.openTag):\(markdownSymbol)", tagType: tagType)
+                        elements.append(subElement)
+                        subElement = Element()
+                    } else {
+                        element.set(with: "\(markdownSymbol)", tagType: tagType)
+                        elements.append(element)
+                        element = Element()
+                    }
                 }
             }
         }
