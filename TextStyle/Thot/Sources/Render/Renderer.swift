@@ -8,7 +8,7 @@
 
 import Foundation
 
-public final class Render {
+public final class Renderer {
     public var theme: Theme?
     
     public func render(label: UILabel, with textStyle: TextStyle) {

@@ -78,7 +78,7 @@ public struct Style: Decodable {
     }
 }
 
-final class ColorAdapter {
+fileprivate final class ColorAdapter {
     class func uiColor(from string: String?) -> UIColor? {
         guard let string = string else {
             return nil
@@ -101,7 +101,7 @@ final class ColorAdapter {
     }
 }
 
-final class AlignmentAdapter {
+fileprivate final class AlignmentAdapter {
     class func nsTextAlignment(from string: String?) -> NSTextAlignment? {
         guard let string = string else {
             return nil

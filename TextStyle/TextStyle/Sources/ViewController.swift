@@ -53,7 +53,7 @@ final class ViewController : UIViewController {
         return label
     }()
     
-    private var render: Render = Render()
+    private var render: Renderer = Renderer()
     
     private var data = MyViewControllerData(textStyle1: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")),
                                             textStyle2: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")),
