@@ -8,6 +8,10 @@
 
 import Foundation
 
+enum ThemeError: Error {
+    case missingStyle(name: String)
+}
+
 public struct Theme: Decodable {
     let styles: [String: StyleAttributes] // name-id: Style
     

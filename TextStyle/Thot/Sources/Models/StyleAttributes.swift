@@ -8,24 +8,34 @@
 
 import Foundation
 
-public struct StyleAttributes: Decodable {
+public struct StyleAttributes {
     let name: String?
     let size: CGFloat
     let color: UIColor
+    let backgroundColor: UIColor
     let alignment: NSTextAlignment
     let kern: CGFloat
+    let maxLineHeight: CGFloat
+    let minLineHeight: CGFloat
     let lineHeightMultiple: CGFloat
+    let lineSpacing: CGFloat
     let paragraphSpacing: CGFloat
     let numberOfLines: Int
     var markdown: Markdown
-    
+}
+
+extension StyleAttributes: Decodable {
     private enum CodingKeys: String, CodingKey {
         case name
         case size
         case color
+        case backgroundColor
         case alignment
         case kern
+        case maxLineHeight
+        case minLineHeight
         case lineHeightMultiple
+        case lineSpacing
         case paragraphSpacing
         case numberOfLines
     }
@@ -35,89 +45,34 @@ public struct StyleAttributes: Decodable {
         let name = try values.decodeIfPresent(String.self, forKey: .name)
         let size = try values.decodeIfPresent(CGFloat.self, forKey: .size)
         let colorString = try values.decodeIfPresent(String.self, forKey: .color)
+        let backgroundColorString = try values.decodeIfPresent(String.self, forKey: .backgroundColor)
         let alignmentString = try values.decodeIfPresent(String.self, forKey: .alignment)
         let kern = try values.decodeIfPresent(CGFloat.self, forKey: .kern)
+        let maxLineHeight = try values.decodeIfPresent(CGFloat.self, forKey: .maxLineHeight)
+        let minLineHeight = try values.decodeIfPresent(CGFloat.self, forKey: .minLineHeight)
         let lineHeightMultiple = try values.decodeIfPresent(CGFloat.self, forKey: .lineHeightMultiple)
+        let lineSpacing = try values.decodeIfPresent(CGFloat.self, forKey: .lineSpacing)
         let paragraphSpacing = try values.decodeIfPresent(CGFloat.self, forKey: .paragraphSpacing)
         let numberOfLines = try values.decodeIfPresent(Int.self, forKey: .numberOfLines)
         
-        let color = ColorAdapter.uiColor(from: colorString) ?? .black
-        let alignment = AlignmentAdapter.nsTextAlignment(from: alignmentString) ?? .natural
+        let color = try ColorAdapter.uiColor(from: colorString) ?? .black
+        let backgroundColor = try ColorAdapter.uiColor(from: backgroundColorString) ?? .clear
+        let alignment = try AlignmentAdapter.nsTextAlignment(from: alignmentString) ?? .natural
         
-        self = .init(name: name,
-                     size: size ?? 13.0,
-                     color: color,
-                     alignment: alignment,
-                     kern: kern ?? 0.0,
-                     lineHeightMultiple: lineHeightMultiple ?? 0.0,
-                     paragraphSpacing: paragraphSpacing ?? 0.0,
-                     numberOfLines: numberOfLines ?? 1,
-                     markdown: .none)
-        return
-    }
-    
-    init(name: String? = nil,
-         size: CGFloat = 13.0,
-         color: UIColor = .black,
-         alignment: NSTextAlignment = .natural,
-         kern: CGFloat = 0.0,
-         lineHeightMultiple: CGFloat = 0.0,
-         paragraphSpacing: CGFloat = 0.0,
-         numberOfLines: Int = 1,
-         markdown: Markdown = .none
-        ) {
         self.name = name
-        self.size = size
+        self.size = size ?? 13.0
         self.color = color
+        self.backgroundColor = backgroundColor
         self.alignment = alignment
-        self.kern = kern
-        self.lineHeightMultiple = lineHeightMultiple
-        self.paragraphSpacing = paragraphSpacing
-        self.numberOfLines = numberOfLines
-        self.markdown = markdown
-    }
-}
-
-fileprivate final class ColorAdapter {
-    class func uiColor(from string: String?) -> UIColor? {
-        guard let string = string else {
-            return nil
-        }
+        self.kern = kern ?? 0.0
+        self.maxLineHeight = maxLineHeight ?? 0.0
+        self.minLineHeight = minLineHeight ?? 0.0
+        self.lineHeightMultiple = lineHeightMultiple ?? 0.0
+        self.lineSpacing = lineSpacing ?? 0.0
+        self.paragraphSpacing = paragraphSpacing ?? 0.0
+        self.numberOfLines = numberOfLines ?? 1
+        self.markdown = .none
         
-        switch string {
-        case "black":
-            return .black
-        case "white":
-            return .white
-        case "red":
-            return .red
-        case "blue":
-            return .blue
-        case "green":
-            return .green
-        default:
-            return nil
-        }
-    }
-}
-
-fileprivate final class AlignmentAdapter {
-    class func nsTextAlignment(from string: String?) -> NSTextAlignment? {
-        guard let string = string else {
-            return nil
-        }
-        
-        switch string {
-        case "natural":
-            return .natural
-        case "left":
-            return .left
-        case "right":
-            return .right
-        case "center":
-            return .center
-        default:
-            return nil
-        }
+        return
     }
 }

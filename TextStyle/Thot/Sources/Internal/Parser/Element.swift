@@ -8,6 +8,10 @@
 
 import Foundation
 
+enum ElementError: Error {
+    case unconsistentOpenCloseTag(open: String, close: String)
+}
+
 struct Element {
     private(set) var openTag: String
     private(set) var content: String

@@ -27,6 +27,8 @@ extension TextStyle: Decodable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let text = try container.decode(String.self, forKey: .text)
+        
+        // This optional try is messing up with StyleAttributes possible errors
         let styleAttributes = try? container.decodeIfPresent(StyleAttributes.self, forKey: .style)
         let name = try? container.decodeIfPresent(String.self, forKey: .style)
         

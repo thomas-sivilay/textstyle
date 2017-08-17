@@ -31,8 +31,8 @@
 		C841F8B21F34AB0A00CE18CC /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C841F8B01F34AB0A00CE18CC /* LaunchScreen.storyboard */; };
 		C841F8BD1F34AB0A00CE18CC /* TextStyleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C841F8BC1F34AB0A00CE18CC /* TextStyleTests.swift */; };
 		C84BBB871F45E55A00365861 /* Style.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84BBB861F45E55A00365861 /* Style.swift */; };
-		C8A8FC4E1F45DC8A0027A996 /* ThemeError.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A8FC4D1F45DC8A0027A996 /* ThemeError.swift */; };
-		C8A8FC501F45DD120027A996 /* ElementError.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A8FC4F1F45DD120027A996 /* ElementError.swift */; };
+		C84BBB8A1F45E7FF00365861 /* ColorAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84BBB891F45E7FF00365861 /* ColorAdapter.swift */; };
+		C84BBB8C1F45E82500365861 /* AlignmentAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84BBB8B1F45E82500365861 /* AlignmentAdapter.swift */; };
 		C8A8FC521F45DD610027A996 /* RendererError.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A8FC511F45DD610027A996 /* RendererError.swift */; };
 /* End PBXBuildFile section */
 
@@ -112,8 +112,8 @@
 		C841F8BE1F34AB0A00CE18CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C841F8CB1F34AC2100CE18CC /* Playground.playground */ = {isa = PBXFileReference; lastKnownFileType = file.playground; path = Playground.playground; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		C84BBB861F45E55A00365861 /* Style.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Style.swift; sourceTree = "<group>"; };
-		C8A8FC4D1F45DC8A0027A996 /* ThemeError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeError.swift; sourceTree = "<group>"; };
-		C8A8FC4F1F45DD120027A996 /* ElementError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElementError.swift; sourceTree = "<group>"; };
+		C84BBB891F45E7FF00365861 /* ColorAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorAdapter.swift; sourceTree = "<group>"; };
+		C84BBB8B1F45E82500365861 /* AlignmentAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlignmentAdapter.swift; sourceTree = "<group>"; };
 		C8A8FC511F45DD610027A996 /* RendererError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RendererError.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -208,8 +208,6 @@
 				C80EDBC61F447B0E00C25851 /* Theme.swift */,
 				C80EDBC81F447B2000C25851 /* Markdown.swift */,
 				C80EDBD11F447B9100C25851 /* RichText.swift */,
-				C8A8FC4D1F45DC8A0027A996 /* ThemeError.swift */,
-				C8A8FC4F1F45DD120027A996 /* ElementError.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -301,9 +299,19 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		C84BBB881F45E7EA00365861 /* Adapter */ = {
+			isa = PBXGroup;
+			children = (
+				C84BBB891F45E7FF00365861 /* ColorAdapter.swift */,
+				C84BBB8B1F45E82500365861 /* AlignmentAdapter.swift */,
+			);
+			path = Adapter;
+			sourceTree = "<group>";
+		};
 		C8A8FC4B1F448A420027A996 /* Internal */ = {
 			isa = PBXGroup;
 			children = (
+				C84BBB881F45E7EA00365861 /* Adapter */,
 				C80EDBBF1F447A9100C25851 /* Lexer */,
 				C80EDBC01F447A9600C25851 /* Parser */,
 			);
@@ -486,10 +494,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				C80EDBC91F447B2000C25851 /* Markdown.swift in Sources */,
+				C84BBB8C1F45E82500365861 /* AlignmentAdapter.swift in Sources */,
 				C80EDBD01F447B7300C25851 /* Lexer.swift in Sources */,
 				C80EDBD61F447BC500C25851 /* Parser.swift in Sources */,
 				C80EDBDD1F447C2900C25851 /* UILabel+Thot.swift in Sources */,
 				C80EDBD41F447BAA00C25851 /* Element.swift in Sources */,
+				C84BBB8A1F45E7FF00365861 /* ColorAdapter.swift in Sources */,
 				C80EDBCC1F447B3800C25851 /* Token.swift in Sources */,
 				C80EDBC71F447B0E00C25851 /* Theme.swift in Sources */,
 				C80EDBD21F447B9100C25851 /* RichText.swift in Sources */,
@@ -497,8 +507,6 @@
 				C80EDBC51F447AFC00C25851 /* TextStyle.swift in Sources */,
 				C80EDBC31F447AC300C25851 /* StyleAttributes.swift in Sources */,
 				C84BBB871F45E55A00365861 /* Style.swift in Sources */,
-				C8A8FC501F45DD120027A996 /* ElementError.swift in Sources */,
-				C8A8FC4E1F45DC8A0027A996 /* ThemeError.swift in Sources */,
 				C80EDBDB1F447C0A00C25851 /* Renderer.swift in Sources */,
 				C8A8FC521F45DD610027A996 /* RendererError.swift in Sources */,
 			);

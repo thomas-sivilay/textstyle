@@ -55,6 +55,7 @@ extension UILabel {
     private func makeAttributes(for styleAttributes: StyleAttributes) -> [NSAttributedStringKey: Any] {
         var attributes = [NSAttributedStringKey: Any]()
         attributes[NSAttributedStringKey.foregroundColor] = styleAttributes.color
+        attributes[NSAttributedStringKey.backgroundColor] = styleAttributes.backgroundColor
         
         if styleAttributes.markdown == Markdown.emphasize {
             attributes[NSAttributedStringKey.font] = UIFont.italicSystemFont(ofSize: styleAttributes.size)

@@ -22,7 +22,7 @@ let viewControllerJSON = """
 {
 "textStyle1": { "text": "Hello World!", "style": "title" },
 "textStyle2": { "text": "Welcome to my new framework", "style": "body" },
-"textStyle3": { "text": "Backend driven style but layout is done on app side", "style": { "size": 14.0, "color": "green"} },
+"textStyle3": { "text": "Backend driven style but layout is done on app side", "style": { "size": 14.0, "color": "#323232"} },
 "textStyle4": "<title>__Hello__ *World!*</title><body>Not</body><title>LOL</title>"
 }
 """.data(using: .utf8)!
