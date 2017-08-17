@@ -12,10 +12,10 @@ public final class Renderer {
     public var theme: Theme?
     
     public func render(label: UILabel, with textStyle: TextStyle) {
-        var style = Style()
+        var style = StyleAttributes()
         
         switch textStyle.style {
-        case let .style(name):
+        case let .name(name):
             if let theme = theme, let themeStyle = theme.styles[name] {
                 style = themeStyle
             }

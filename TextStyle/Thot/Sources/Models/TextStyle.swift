@@ -10,9 +10,9 @@ import Foundation
 
 public struct TextStyle {
     var text: String
-    var style: StyleOrAttributes
+    var style: Style
     
-    public init(text: String = "", style: StyleOrAttributes) {
+    public init(text: String = "", style: Style) {
         self.text = text
         self.style = style
     }
@@ -29,10 +29,10 @@ extension TextStyle: Decodable {
         let text = try container.decode(String.self, forKey: .text)
         
         // To refactor
-        if let style = try? container.decodeIfPresent(Style.self, forKey: .style) {
-            self = TextStyle(text: text, style: StyleOrAttributes.attributes(style: style!))
+        if let styleAttributes = try? container.decodeIfPresent(StyleAttributes.self, forKey: .style) {
+            self = TextStyle(text: text, style: Style.attributes(styleAttributes!))
         } else if let name = try? container.decodeIfPresent(String.self, forKey: .style) {
-            self = TextStyle(text: text, style: StyleOrAttributes.style(name: name!))
+            self = TextStyle(text: text, style: Style.name(name!))
         } else {
             fatalError()
         }

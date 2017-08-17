@@ -1,5 +1,5 @@
 //
-//  StyleOrAttributes.swift
+//  Style.swift
 //  Thot
 //
 //  Created by Thomas Sivilay on 8/16/17.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum StyleOrAttributes {
-    case style(name: String)
-    case attributes(style: Style)
+public enum Style {
+    case name(String)
+    case attributes(StyleAttributes)
 }

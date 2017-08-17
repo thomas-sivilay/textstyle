@@ -1,5 +1,5 @@
 //
-//  Style.swift
+//  StyleAttributes.swift
 //  Thot
 //
 //  Created by Thomas Sivilay on 8/16/17.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct Style: Decodable {
+public struct StyleAttributes: Decodable {
     let name: String?
     let size: CGFloat
     let color: UIColor
