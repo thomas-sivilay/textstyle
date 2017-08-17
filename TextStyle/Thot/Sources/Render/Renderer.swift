@@ -11,7 +11,7 @@ import Foundation
 public final class Renderer {
     public var theme: Theme?
     
-    public func render(label: UILabel, with textStyle: TextStyle) {
+    public func render(label: UILabel, with textStyle: TextStyle) throws {
         var style = StyleAttributes()
         
         switch textStyle.style {
@@ -23,15 +23,15 @@ public final class Renderer {
             style = attributes
         }
         
-        label.setText(textStyle.text, with: style)
+        try label.setText(textStyle.text, with: style)
     }
     
     public init() {
         self.theme = nil
     }
     
-    public func render(label: UILabel, with richText: RichText) {
-        label.setRichText(richText.text, with: theme!)
+    public func render(label: UILabel, with richText: RichText) throws {
+        try label.setRichText(richText.text, with: theme!)
         label.numberOfLines = 0
     }
 }

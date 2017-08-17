@@ -9,29 +9,35 @@
 import Foundation
 
 extension UILabel {
-    func setRichText(_ text: String, with theme: Theme) {
-        self.attributedText = makeAttributedString(for: text, with: theme)
-        self.numberOfLines = 0
+    func setRichText(_ text: String, with theme: Theme) throws {
+        do {
+            attributedText = try makeAttributedString(for: text, with: theme)
+            numberOfLines = 0
+        } catch {
+            throw error
+        }
     }
     
-    func setText(_ text: String, with attributes: StyleAttributes) {
-        self.attributedText = makeAttributedString(for: text, with: attributes)
-        self.numberOfLines = attributes.numberOfLines
+    func setText(_ text: String, with attributes: StyleAttributes) throws {
+        attributedText = makeAttributedString(for: text, with: attributes)
+        numberOfLines = attributes.numberOfLines
     }
     
-    private func makeAttributedString(for text: String, with theme: Theme) -> NSAttributedString {
+    private func makeAttributedString(for text: String, with theme: Theme) throws -> NSAttributedString {
         let elements = ElementParser.parse(text: text)
         var richText = [(String, StyleAttributes)]()
         
         let aText = NSMutableAttributedString()
         
-        elements.forEach { element in
-            if let style = theme.style(with: element.openTag), element.openTag == element.closeTag {
-                richText.append((element.content, style))
-            } else {
-                // error
-                print("ERROR, can't find style with name: \(element.openTag)")
+        try elements.forEach { element in
+            guard let style = theme.style(with: element.openTag) else {
+                throw RendererError.theme(error: ThemeError.missingStyle(name: element.openTag))
             }
+            guard element.openTag == element.closeTag else {
+                throw RendererError.element(error: ElementError.unconsistentOpenCloseTag(open: element.openTag, close: element.closeTag))
+            }
+            
+            richText.append((element.content, style))
         }
         
         richText.forEach {

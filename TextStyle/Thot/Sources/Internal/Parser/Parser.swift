@@ -10,7 +10,7 @@ import Foundation
 
 final class ElementParser {
     class func parse(text: String) -> [Element] {
-        var tokenizer = Lexer(text: text)
+        let tokenizer = Lexer(text: text)
         return try! self.parse(with: tokenizer)
     }
     

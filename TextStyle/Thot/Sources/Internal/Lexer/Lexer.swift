@@ -90,6 +90,7 @@ struct Lexer {
             previousMarkdown = nil
             return .markdown(.close, markdown: markdown)
         }
+        
         previousMarkdown = .emphasize
         return .markdown(.open, markdown: .emphasize)
     }

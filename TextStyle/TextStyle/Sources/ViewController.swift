@@ -65,11 +65,19 @@ final class ViewController : UIViewController {
              (label2, data.textStyle2),
              (label3, data.textStyle3)]
                 .forEach {
-                    render.render(label: $0.0, with: $0.1)
+                    do {
+                        try render.render(label: $0.0, with: $0.1)
+                    } catch {
+                        print(error)
+                    }
             }
             
             // To improve
-            render.render(label: label4, with: data.textStyle4)
+            do {
+                try render.render(label: label4, with: data.textStyle4)
+            } catch {
+                print(error)
+            }
         }
     }
     

@@ -15,7 +15,8 @@ struct Element {
     
     init(openTag: String = "",
          content: String = "",
-         closeTag: String = "") {
+         closeTag: String = ""
+    ) {
         self.openTag = openTag
         self.content = content
         self.closeTag = closeTag

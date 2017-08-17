@@ -9,6 +9,5 @@
 import Foundation
 
 enum LexerError: Error {
-    case unknownCharacter
     case invalidTag
 }
