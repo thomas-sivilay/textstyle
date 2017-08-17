@@ -55,9 +55,9 @@ final class ViewController : UIViewController {
     
     private var render: Renderer = Renderer()
     
-    private var data = MyViewControllerData(textStyle1: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")),
-                                            textStyle2: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")),
-                                            textStyle3: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")),
+    private var data = MyViewControllerData(textStyle1: TextStyle(text: "", style: Style.name("toto")),
+                                            textStyle2: TextStyle(text: "", style: Style.name("toto")),
+                                            textStyle3: TextStyle(text: "", style: Style.name("toto")),
                                             textStyle4: RichText(text: ""))
         {
         didSet {

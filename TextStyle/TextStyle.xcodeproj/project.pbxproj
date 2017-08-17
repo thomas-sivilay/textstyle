@@ -12,7 +12,7 @@
 		C80EDBB21F447A4A00C25851 /* Thot.h in Headers */ = {isa = PBXBuildFile; fileRef = C80EDBA21F447A4A00C25851 /* Thot.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		C80EDBB51F447A4A00C25851 /* Thot.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C80EDBA01F447A4A00C25851 /* Thot.framework */; };
 		C80EDBB61F447A4A00C25851 /* Thot.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C80EDBA01F447A4A00C25851 /* Thot.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		C80EDBC31F447AC300C25851 /* Style.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80EDBC21F447AC300C25851 /* Style.swift */; };
+		C80EDBC31F447AC300C25851 /* StyleAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80EDBC21F447AC300C25851 /* StyleAttributes.swift */; };
 		C80EDBC51F447AFC00C25851 /* TextStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80EDBC41F447AFC00C25851 /* TextStyle.swift */; };
 		C80EDBC71F447B0E00C25851 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80EDBC61F447B0E00C25851 /* Theme.swift */; };
 		C80EDBC91F447B2000C25851 /* Markdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80EDBC81F447B2000C25851 /* Markdown.swift */; };
@@ -22,7 +22,7 @@
 		C80EDBD21F447B9100C25851 /* RichText.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80EDBD11F447B9100C25851 /* RichText.swift */; };
 		C80EDBD41F447BAA00C25851 /* Element.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80EDBD31F447BAA00C25851 /* Element.swift */; };
 		C80EDBD61F447BC500C25851 /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80EDBD51F447BC500C25851 /* Parser.swift */; };
-		C80EDBD81F447BEF00C25851 /* StyleOrAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80EDBD71F447BEF00C25851 /* StyleOrAttributes.swift */; };
+		C80EDBD81F447BEF00C25851 /* Style.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80EDBD71F447BEF00C25851 /* Style.swift */; };
 		C80EDBDB1F447C0A00C25851 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80EDBDA1F447C0A00C25851 /* Renderer.swift */; };
 		C80EDBDD1F447C2900C25851 /* UILabel+Thot.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80EDBDC1F447C2900C25851 /* UILabel+Thot.swift */; };
 		C841F8A81F34AB0A00CE18CC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C841F8A71F34AB0A00CE18CC /* AppDelegate.swift */; };
@@ -85,7 +85,7 @@
 		C80EDBA81F447A4A00C25851 /* ThotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ThotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C80EDBAF1F447A4A00C25851 /* ThotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThotTests.swift; sourceTree = "<group>"; };
 		C80EDBB11F447A4A00C25851 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		C80EDBC21F447AC300C25851 /* Style.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Style.swift; sourceTree = "<group>"; };
+		C80EDBC21F447AC300C25851 /* StyleAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleAttributes.swift; sourceTree = "<group>"; };
 		C80EDBC41F447AFC00C25851 /* TextStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextStyle.swift; sourceTree = "<group>"; };
 		C80EDBC61F447B0E00C25851 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		C80EDBC81F447B2000C25851 /* Markdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markdown.swift; sourceTree = "<group>"; };
@@ -95,7 +95,7 @@
 		C80EDBD11F447B9100C25851 /* RichText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichText.swift; sourceTree = "<group>"; };
 		C80EDBD31F447BAA00C25851 /* Element.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Element.swift; sourceTree = "<group>"; };
 		C80EDBD51F447BC500C25851 /* Parser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
-		C80EDBD71F447BEF00C25851 /* StyleOrAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleOrAttributes.swift; sourceTree = "<group>"; };
+		C80EDBD71F447BEF00C25851 /* Style.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Style.swift; sourceTree = "<group>"; };
 		C80EDBDA1F447C0A00C25851 /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
 		C80EDBDC1F447C2900C25851 /* UILabel+Thot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UILabel+Thot.swift"; sourceTree = "<group>"; };
 		C841F8A41F34AB0A00CE18CC /* TextStyle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TextStyle.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -196,12 +196,12 @@
 		C80EDBC11F447A9B00C25851 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				C80EDBC21F447AC300C25851 /* Style.swift */,
+				C80EDBC21F447AC300C25851 /* StyleAttributes.swift */,
 				C80EDBC41F447AFC00C25851 /* TextStyle.swift */,
 				C80EDBC61F447B0E00C25851 /* Theme.swift */,
 				C80EDBC81F447B2000C25851 /* Markdown.swift */,
 				C80EDBD11F447B9100C25851 /* RichText.swift */,
-				C80EDBD71F447BEF00C25851 /* StyleOrAttributes.swift */,
+				C80EDBD71F447BEF00C25851 /* Style.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -481,13 +481,13 @@
 				C80EDBD61F447BC500C25851 /* Parser.swift in Sources */,
 				C80EDBDD1F447C2900C25851 /* UILabel+Thot.swift in Sources */,
 				C80EDBD41F447BAA00C25851 /* Element.swift in Sources */,
-				C80EDBD81F447BEF00C25851 /* StyleOrAttributes.swift in Sources */,
+				C80EDBD81F447BEF00C25851 /* Style.swift in Sources */,
 				C80EDBCC1F447B3800C25851 /* Token.swift in Sources */,
 				C80EDBC71F447B0E00C25851 /* Theme.swift in Sources */,
 				C80EDBD21F447B9100C25851 /* RichText.swift in Sources */,
 				C80EDBCE1F447B4E00C25851 /* LexerError.swift in Sources */,
 				C80EDBC51F447AFC00C25851 /* TextStyle.swift in Sources */,
-				C80EDBC31F447AC300C25851 /* Style.swift in Sources */,
+				C80EDBC31F447AC300C25851 /* StyleAttributes.swift in Sources */,
 				C80EDBDB1F447C0A00C25851 /* Renderer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

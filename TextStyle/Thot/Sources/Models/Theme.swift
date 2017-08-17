@@ -9,9 +9,9 @@
 import Foundation
 
 public struct Theme: Decodable {
-    let styles: [String: Style] // name-id: Style
+    let styles: [String: StyleAttributes] // name-id: Style
     
-    func style(with tag: String) -> Style? {
+    func style(with tag: String) -> StyleAttributes? {
         let splittedTag = tag.split(separator: ":")
         let styleName = splittedTag[0]
         var style = styles[String(styleName)]
