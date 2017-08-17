@@ -65,7 +65,7 @@ public struct StyleAttributes: Decodable {
          paragraphSpacing: CGFloat = 0.0,
          numberOfLines: Int = 1,
          markdown: Markdown = .none
-    ) {
+        ) {
         self.name = name
         self.size = size
         self.color = color
