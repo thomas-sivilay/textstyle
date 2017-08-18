@@ -1,5 +1,5 @@
 //
-//  Lexer.swift
+//  Renderable.swift
 //  Thot
 //
 //  Created by Thomas Sivilay on 8/18/17.
@@ -8,8 +8,5 @@
 
 import Foundation
 
-protocol Lexer {
-    init(text: String)
-    mutating func nextToken() throws -> Token?
+public protocol Renderable {
 }
-

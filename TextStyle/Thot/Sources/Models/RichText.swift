@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct RichText {
+public struct RichText: Renderable {
     var text: String
     
     public init(text: String = "") {

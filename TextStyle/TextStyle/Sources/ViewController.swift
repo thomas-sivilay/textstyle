@@ -53,7 +53,7 @@ final class ViewController : UIViewController {
         return label
     }()
     
-    private var render: Renderer = Renderer()
+    private var render: Renderer = Renderer.sharedInstance
     
     private var data = MyViewControllerData(textStyle1: TextStyle(text: "", style: Style.name("toto")),
                                             textStyle2: TextStyle(text: "", style: Style.name("toto")),
@@ -61,22 +61,17 @@ final class ViewController : UIViewController {
                                             textStyle4: RichText(text: ""))
         {
         didSet {
-            [(label1, data.textStyle1),
-             (label2, data.textStyle2),
-             (label3, data.textStyle3)]
-                .forEach {
+            let array: [(UILabel, Renderable)] = [(label1, data.textStyle1),
+                                                  (label2, data.textStyle2),
+                                                  (label3, data.textStyle3),
+                                                  (label4, data.textStyle4)]
+
+                array.forEach {
                     do {
-                        try render.render(label: $0.0, with: $0.1)
+                        try render.render($0.0, with: $0.1)
                     } catch {
                         print(error)
                     }
-            }
-            
-            // To improve
-            do {
-                try render.render(label: label4, with: data.textStyle4)
-            } catch {
-                print(error)
             }
         }
     }

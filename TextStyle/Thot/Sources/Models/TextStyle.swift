@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct TextStyle {
+public struct TextStyle: Renderable {
     var text: String
     var style: Style
     

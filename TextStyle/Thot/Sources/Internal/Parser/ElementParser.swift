@@ -1,5 +1,5 @@
 //
-//  Parser.swift
+//  ElementParser.swift
 //  Thot
 //
 //  Created by Thomas Sivilay on 8/16/17.
@@ -9,11 +9,6 @@
 import Foundation
 
 final class ElementParser {
-    class func parse(text: String) -> [Element] {
-        let tokenizer = Lexer(text: text)
-        return try! self.parse(with: tokenizer)
-    }
-    
     private enum Step {
         case open
         case content
@@ -21,13 +16,13 @@ final class ElementParser {
         case unknown
     }
     
-    class func parse(with tokenizer: Lexer) throws -> [Element] {
-        var tokenizer = tokenizer
+    func parse(with lexer: Lexer) throws -> [Element] {
+        var lexer = lexer
         var elements = [Element]()
         var element = Element()
         var subElement = Element()
         
-        while let token = try tokenizer.nextToken() {
+        while let token = try lexer.nextToken() {
             switch token {
             case let .tag(type, name: _):
                 element.set(with: token)

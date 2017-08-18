@@ -10,10 +10,11 @@ import Foundation
 
 enum ThemeError: Error {
     case missingStyle(name: String)
+    case missingTheme
 }
 
 public struct Theme: Decodable {
-    let styles: [String: StyleAttributes] // name-id: Style
+    private let styles: [String: StyleAttributes] // name-id: Style
     
     func style(with tag: String) -> StyleAttributes? {
         let splittedTag = tag.split(separator: ":")

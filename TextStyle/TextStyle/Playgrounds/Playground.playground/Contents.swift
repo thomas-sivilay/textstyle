@@ -48,11 +48,11 @@ final class myViewController : UIViewController {
         return label
     }()
     
-    private var render: Render = Render()
+    private var render: Renderer = Renderer.sharedInstance
     
-    private var data = MyViewControllerData(textStyle1: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")),
-                                            textStyle2: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")),
-                                            textStyle3: TextStyle(text: "", style: StyleOrAttributes.style(name: "toto")),
+    private var data = MyViewControllerData(textStyle1: TextStyle(text: "", style: Style.name("toto")),
+                                            textStyle2: TextStyle(text: "", style: Style.name("toto")),
+                                            textStyle3: TextStyle(text: "", style: Style.name("toto")),
                                             textStyle4: RichText(text: ""))
         {
         didSet {
@@ -60,11 +60,19 @@ final class myViewController : UIViewController {
              (label2, data.textStyle2),
              (label3, data.textStyle3)]
                 .forEach {
-                    render.render(label: $0.0, with: $0.1)
-                }
+                    do {
+                        try render.render(label: $0.0, with: $0.1)
+                    } catch {
+                        print(error)
+                    }
+            }
             
             // To improve
-            render.render(label: label4, with: data.textStyle4)
+            do {
+                try render.render(label: label4, with: data.textStyle4)
+            } catch {
+                print(error)
+            }
         }
     }
     
